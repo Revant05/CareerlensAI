@@ -153,6 +153,17 @@
     transform: translateX(-50%);
     z-index: 2;
     box-shadow: 0 0 10px var(--primary-glow);
+    transition: all 0.3s ease;
+}
+
+.step-marker.completed {
+    background: var(--primary);
+    color: var(--bg-dark);
+    /* Contrast text */
+    box-shadow: 0 0 20px var(--primary);
+    border-color: var(--primary);
+    transform: translateX(-50%) scale(1.1);
+    /* Slight pop */
 }
 
 .step-card {

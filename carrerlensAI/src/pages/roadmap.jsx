@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, CheckCircle, BookOpen, Star, Layout, Code, Server, Shield, Database, Terminal, Cpu, Globe, ArrowLeft } from 'lucide-react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { motion as Motion } from 'framer-motion';
 import AnimatedPage from '../components/AnimatedPage';
 import GlitchText from '../components/GlitchText';
@@ -83,10 +86,8 @@ const bestPractices = [
 ];
 
 // ==========================================
-// 2. DETAILED CONTENT (Expanded for All Major Roadmaps) - (Using same data as before)
+// 2. DETAILED CONTENT (Expanded for All Major Roadmaps)
 // ==========================================
-// [Truncated for brevity in thought, but included fully in file]
-// I will reuse the previous data structure exactly.
 
 const specificRoadmapDetails = {
   frontend: {
@@ -303,7 +304,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle }) => (
   </div>
 );
 
-const RoadmapCard = ({ id, title, desc, isNew, type }) => {
+const RoadmapCard = ({ id, title, desc, isFresh, type }) => {
   let Icon = BookOpen;
   if (type === 'role') Icon = Layout;
   if (type === 'skill') Icon = Code;
@@ -319,7 +320,7 @@ const RoadmapCard = ({ id, title, desc, isNew, type }) => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
       >
-        {isNew && <span className="new-badge">NEW</span>}
+        {isFresh && <span className="new-badge">NEW</span>}
         <div className="card-top">
           <Icon size={20} className="card-icon-visual" />
         </div>
@@ -333,10 +334,33 @@ const RoadmapCard = ({ id, title, desc, isNew, type }) => {
 // --- HOME PAGE (LIST) ---
 export const RoadmapList = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [roadmaps, setRoadmaps] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRoadmaps();
+  }, []);
+
+  const fetchRoadmaps = async () => {
+    try {
+      // We can fetch from public or protected route. Ideally public if just content, 
+      // but we put it behind auth in routes.
+      const res = await axios.get('http://localhost:5000/api/roadmap');
+      setRoadmaps(res.data);
+    } catch (err) {
+      console.error("Failed to fetch roadmaps", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filterList = (list) => list.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const roleRoadmaps = roadmaps.filter(r => r.type === 'role');
+  const skillRoadmaps = roadmaps.filter(r => r.type === 'skill');
+  const bestPractices = roadmaps.filter(r => r.type === 'best');
 
   return (
     <AnimatedPage className="roadmap-container container">
@@ -358,37 +382,47 @@ export const RoadmapList = () => {
         </div>
       </header>
 
-      <div className="content-container">
-        {/* Role Based */}
-        {(filterList(roleRoadmaps).length > 0) && (
-          <section className="group-section">
-            <SectionHeader icon={Layout} title="Role-based Roadmaps" subtitle="Step-by-step guides for engineering roles" />
-            <div className="grid-roles">
-              {filterList(roleRoadmaps).map(r => <RoadmapCard key={r.id} {...r} type="role" />)}
-            </div>
-          </section>
-        )}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>Loading Library...</div>
+      ) : (
+        <div className="content-container">
+          {/* Role Based */}
+          {(filterList(roleRoadmaps).length > 0) && (
+            <section className="group-section">
+              <SectionHeader icon={Layout} title="Role-based Roadmaps" subtitle="Step-by-step guides for engineering roles" />
+              <div className="grid-roles">
+                {filterList(roleRoadmaps).map(r => <RoadmapCard key={r.roadmapId} id={r.roadmapId} {...r} />)}
+              </div>
+            </section>
+          )}
 
-        {/* Skill Based */}
-        {(filterList(skillRoadmaps).length > 0) && (
-          <section className="group-section">
-            <SectionHeader icon={Code} title="Skill-based Roadmaps" subtitle="Master specific technologies" />
-            <div className="grid-skills">
-              {filterList(skillRoadmaps).map(r => <RoadmapCard key={r.id} {...r} type="skill" />)}
-            </div>
-          </section>
-        )}
+          {/* Skill Based */}
+          {(filterList(skillRoadmaps).length > 0) && (
+            <section className="group-section">
+              <SectionHeader icon={Code} title="Skill-based Roadmaps" subtitle="Master specific technologies" />
+              <div className="grid-skills">
+                {filterList(skillRoadmaps).map(r => <RoadmapCard key={r.roadmapId} id={r.roadmapId} {...r} />)}
+              </div>
+            </section>
+          )}
 
-        {/* Best Practices */}
-        {(filterList(bestPractices).length > 0) && (
-          <section className="group-section">
-            <SectionHeader icon={CheckCircle} title="Best Practices" subtitle="Standards and guidelines" />
-            <div className="grid-skills">
-              {filterList(bestPractices).map(r => <RoadmapCard key={r.id} {...r} type="best" />)}
+          {/* Best Practices */}
+          {(filterList(bestPractices).length > 0) && (
+            <section className="group-section">
+              <SectionHeader icon={CheckCircle} title="Best Practices" subtitle="Standards and guidelines" />
+              <div className="grid-skills">
+                {filterList(bestPractices).map(r => <RoadmapCard key={r.roadmapId} id={r.roadmapId} {...r} />)}
+              </div>
+            </section>
+          )}
+
+          {roadmaps.length === 0 && (
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <p>No roadmaps found or database is empty.</p>
             </div>
-          </section>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <div style={{ height: '50px' }} />
     </AnimatedPage>
@@ -399,16 +433,78 @@ export const RoadmapList = () => {
 export const RoadmapDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const allItems = [...roleRoadmaps, ...skillRoadmaps, ...bestPractices];
-  const foundItem = allItems.find(i => i.id === id);
-  const pageTitle = foundItem ? foundItem.title : (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Unknown');
+  const [data, setData] = useState(null); // Values: { content, progress }
+  const [loading, setLoading] = useState(true);
 
-  const data = getRoadmapData(id, pageTitle);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetchRoadmapData();
+  }, [id]);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [id]);
+  const fetchRoadmapData = async () => {
+    if (!user) return;
+    try {
+      // This endpoint now returns { content: {title, steps...}, progress: {...} }
+      const res = await axios.get(`http://localhost:5000/api/roadmap/${id}`);
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load roadmap");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!id) return <div>Roadmap not found.</div>;
+  const toggleNode = async (nodeTitle) => {
+    try {
+      const res = await axios.put('http://localhost:5000/api/roadmap/node', {
+        roadmapId: id,
+        nodeTitle
+      });
+      // Update local state progress
+      setData(prev => ({
+        ...prev,
+        progress: { ...prev.progress, completedNodes: res.data.completedNodes }
+      }));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update progress");
+    }
+  };
+
+  const finishRoadmap = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/roadmap/complete', {
+        roadmapId: id,
+        roadmapTitle: data.content.title
+      });
+      setData(prev => ({
+        ...prev,
+        progress: res.data.progress
+      }));
+
+      if (res.data.token) {
+        toast('🏆 Token Earned! Check your profile.', { duration: 5000, icon: '🎉' });
+      } else {
+        toast.success('Roadmap marked as complete!');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to complete roadmap");
+    }
+  };
+
+  if (loading) return <div style={{ padding: '5rem', textAlign: 'center' }}>Loading Roadmap...</div>;
+  if (!data || !data.content) return <div style={{ padding: '5rem', textAlign: 'center' }}>Roadmap not found in database.</div>;
+
+  const { content, progress } = data;
+
+  // Flatten steps
+  const totalSubSteps = content.steps.reduce((acc, step) => acc + step.sub.length, 0);
+  const completedCount = progress.completedNodes ? progress.completedNodes.length : 0;
+  const percent = totalSubSteps > 0 ? Math.round((completedCount / totalSubSteps) * 100) : 0;
 
   return (
     <AnimatedPage className="detail-wrapper container">
@@ -416,13 +512,27 @@ export const RoadmapDetail = () => {
         <button onClick={() => navigate('/roadmap')} className="back-link">
           <ArrowLeft size={16} /> Back to Roadmaps
         </button>
-        <GlitchText text={data.title} />
-        <p className="detail-desc">{data.desc}</p>
+        <GlitchText text={content.title} />
+        <p className="detail-desc">{content.desc}</p>
+
+        {/* Progress Bar */}
+        <div className="roadmap-progress-container">
+          <div className="progress-info">
+            <span>Progress: {percent}%</span>
+            {percent === 100 && !progress.isFinished && (
+              <button onClick={finishRoadmap} className="neon-btn small-btn">Claim Token 🏆</button>
+            )}
+            {progress.isFinished && <span className="completed-badge">COMPLETED</span>}
+          </div>
+          <div className="progress-bar-bg">
+            <div className="progress-bar-fill" style={{ width: `${percent}%` }}></div>
+          </div>
+        </div>
       </div>
 
       <div className="roadmap-timeline">
         <div className="timeline-line"></div>
-        {data.steps.map((step, idx) => (
+        {content.steps.map((step, idx) => (
           <Motion.div
             key={idx}
             className="timeline-step"
@@ -431,13 +541,23 @@ export const RoadmapDetail = () => {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5, delay: idx * 0.1 }}
           >
-            <div className="step-marker">{idx + 1}</div>
+            <div className={`step-marker ${step.sub.every(s => progress.completedNodes?.includes(s)) ? 'completed' : ''}`}>
+              {step.sub.every(s => progress.completedNodes?.includes(s)) ? <CheckCircle size={20} /> : idx + 1}
+            </div>
             <div className="step-card glass-panel">
               <h3>{step.title}</h3>
-              <ul>
-                {step.sub.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
+              <ul className="step-list">
+                {step.sub.map((s, i) => {
+                  const isChecked = progress.completedNodes?.includes(s);
+                  return (
+                    <li key={i} className={`step-item ${isChecked ? 'checked' : ''}`} onClick={() => toggleNode(s)}>
+                      <div className={`checkbox ${isChecked ? 'active' : ''}`}>
+                        {isChecked && <CheckCircle size={12} />}
+                      </div>
+                      <span>{s}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </Motion.div>
@@ -448,8 +568,8 @@ export const RoadmapDetail = () => {
           whileInView={{ scale: 1 }}
           viewport={{ once: true }}
         >
-          <div className="end-marker">🏆</div>
-          <h3>Roadmap Completed</h3>
+          <div className={`end-marker ${progress.tokenEarned ? 'earned' : ''}`}>🏆</div>
+          <h3>{progress.tokenEarned ? 'Token Earned!' : 'Complete to Earn Token'}</h3>
         </Motion.div>
       </div>
     </AnimatedPage>

@@ -3,6 +3,7 @@ import Login from './pages/login';
 import Signup from './pages/signup';
 import Dashboard from './pages/dashboard';
 import { RoadmapList, RoadmapDetail } from './pages/roadmap';
+import Profile from './pages/profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+  },
+  {
+    path: '/profile',
+    element: <ProtectedRoute><Profile /></ProtectedRoute>,
   },
   {
     path: '/roadmap',

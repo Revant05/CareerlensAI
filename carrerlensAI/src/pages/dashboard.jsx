@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
-import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users } from 'lucide-react';
+import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';
 import SkillChart from '../components/skillchart.jsx';
 import GlitchText from '../components/GlitchText';
@@ -11,6 +12,7 @@ import './dashboard.css';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -37,7 +39,12 @@ export default function Dashboard() {
       <nav className="dashboard-nav glass-panel">
         <GlitchText text="CareerLens AI" as="div" className="nav-logo" />
         <div className="nav-profile">
-          <span className="user-name">Hello, {user?.name || 'User'}</span>
+          <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
+            <User size={18} style={{ marginRight: '5px' }} /> {user?.name || 'User'}
+          </button>
+          <button onClick={toggleTheme} className="logout-btn" title="Toggle Theme" style={{ marginRight: '10px' }}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <button onClick={handleLogout} className="logout-btn" title="Logout">
             <LogOut size={20} />
           </button>

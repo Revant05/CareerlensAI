@@ -1,20 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
 
 :root {
+  /* Default Dark Cyber Palette */
   --bg-dark: #050505;
   --bg-card: #0a0a0f;
 
-  /* Neon Cyber Palette */
+  /* Shared Neon Colors */
   --primary: #00f3ff;
-  /* Cyan */
   --primary-glow: rgba(0, 243, 255, 0.4);
   --secondary: #bc13fe;
-  /* Neon Purple */
   --secondary-glow: rgba(188, 19, 254, 0.4);
   --accent: #ff0055;
-  /* Neon Red/Pink */
   --matrix: #0aff0a;
-  /* Hacker Green */
 
   --text-main: #e0faff;
   --text-muted: #8b9bb4;
@@ -22,6 +19,42 @@
   --glass-bg: rgba(10, 10, 16, 0.85);
   --glass-border: rgba(0, 243, 255, 0.2);
   --glass-highlight: rgba(0, 243, 255, 0.05);
+
+  --grid-line: rgba(0, 243, 255, 0.03);
+  --scanline: rgba(0, 243, 255, 0.3);
+}
+
+.light-theme {
+  /* Futuristic Lab Light Palette */
+  --bg-dark: #e8ecf2;
+  /* Slightly darker cool grey for contrast */
+  --bg-card: rgba(255, 255, 255, 0.9);
+
+  --primary: #0077be;
+  /* Deep distinctive blue */
+  --primary-glow: rgba(0, 119, 190, 0.4);
+  --secondary: #9d4edd;
+  /* Vivid Purple */
+  --secondary-glow: rgba(157, 78, 221, 0.4);
+  --accent: #d0004f;
+  /* Cyber Red */
+  --matrix: #008f11;
+
+  --text-main: #1a202c;
+  --text-muted: #4a5568;
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 119, 190, 0.3);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+
+  /* More visible grid in light mode */
+  --grid-line: rgba(0, 119, 190, 0.08);
+  --scanline: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .glass-panel {
+  box-shadow: 0 4px 20px rgba(0, 119, 190, 0.15);
+  border: 1px solid var(--glass-border);
 }
 
 * {
@@ -32,16 +65,16 @@
 
 body {
   font-family: 'Share Tech Mono', monospace;
-  /* Tech feel for body */
   background-color: var(--bg-dark);
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 
   /* Cyber Grid Background */
   background-image:
-    linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 40px 40px;
   background-position: center top;
 }
@@ -54,7 +87,7 @@ body::after {
   left: 0;
   width: 100vw;
   height: 5px;
-  background: rgba(0, 243, 255, 0.3);
+  background: var(--scanline);
   box-shadow: 0 0 10px var(--primary);
   animation: scanline 8s linear infinite;
   pointer-events: none;
