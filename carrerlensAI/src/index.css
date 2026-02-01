@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg-dark: #050505;
+  --bg-card: #0a0a0f;
+
+  /* Neon Cyber Palette */
+  --primary: #00f3ff;
+  /* Cyan */
+  --primary-glow: rgba(0, 243, 255, 0.4);
+  --secondary: #bc13fe;
+  /* Neon Purple */
+  --secondary-glow: rgba(188, 19, 254, 0.4);
+  --accent: #ff0055;
+  /* Neon Red/Pink */
+  --matrix: #0aff0a;
+  /* Hacker Green */
+
+  --text-main: #e0faff;
+  --text-muted: #8b9bb4;
+
+  --glass-bg: rgba(10, 10, 16, 0.85);
+  --glass-border: rgba(0, 243, 255, 0.2);
+  --glass-highlight: rgba(0, 243, 255, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Share Tech Mono', monospace;
+  /* Tech feel for body */
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+
+  /* Cyber Grid Background */
+  background-image:
+    linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center top;
+}
+
+/* Moving Scanline */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 5px;
+  background: rgba(0, 243, 255, 0.3);
+  box-shadow: 0 0 10px var(--primary);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.5;
+}
+
+@keyframes scanline {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.5;
+  }
+
+  90% {
+    opacity: 0.5;
+  }
+
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+/* --- Typography --- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Orbitron', sans-serif;
+  /* Futuristic headers */
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+/* --- Utilities --- */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.gradient-text {
+  /* Neon Gradient */
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  /* Less blur, more tech */
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+  /* Cyber Corners */
+  clip-path: polygon(20px 0, 100% 0,
+      100% calc(100% - 20px), calc(100% - 20px) 100%,
+      0 100%, 0 20px);
+  position: relative;
+}
+
+/* Corner Accents */
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-top: 2px solid var(--primary);
+  border-left: 2px solid var(--primary);
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  border-bottom: 2px solid var(--primary);
+  border-right: 2px solid var(--primary);
+}
+
+.neon-btn {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 0.75rem 1.75rem;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px var(--primary-glow);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+.neon-btn:hover {
+  background: var(--primary);
+  color: var(--bg-dark);
+  box-shadow: 0 0 25px var(--primary);
+}
+
+.outline-btn {
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  padding: 0.75rem 1.5rem;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 1px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.outline-btn:hover {
+  border-color: var(--text-main);
+  color: var(--text-main);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* --- Loader --- */
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* --- Auth Pages Wrappers --- */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 3rem;
+  /* clip-path handled by glass-panel now */
+  z-index: 10;
+}
