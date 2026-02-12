@@ -14,11 +14,16 @@ export default function Signup() {
     const { signup } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const success = signup(name, email, password);
+        const success = await signup(name, email, password);
         if (success) {
             navigate('/login');
+        } else {
+            // Refresh state by clearing ALL fields on failure
+            setName('');
+            setEmail('');
+            setPassword('');
         }
     };
 

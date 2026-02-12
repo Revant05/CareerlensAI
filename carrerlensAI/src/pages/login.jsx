@@ -15,11 +15,15 @@ export default function Login() {
     const location = useLocation();
     const from = location.state?.from?.pathname || '/dashboard';
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const success = login(email, password);
+        const success = await login(email, password);
         if (success) {
             navigate(from, { replace: true });
+        } else {
+            // Refresh state by clearing BOTH email and password on failure
+            setEmail('');
+            setPassword('');
         }
     };
 

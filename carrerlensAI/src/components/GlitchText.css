@@ -8,6 +8,10 @@
     mix-blend-mode: lighten;
 }
 
+.light-theme .glitch {
+    mix-blend-mode: normal;
+}
+
 .glitch::before,
 .glitch::after {
     content: attr(data-text);

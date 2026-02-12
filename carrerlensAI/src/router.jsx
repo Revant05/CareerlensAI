@@ -4,6 +4,9 @@ import Signup from './pages/signup';
 import Dashboard from './pages/dashboard';
 import { RoadmapList, RoadmapDetail } from './pages/roadmap';
 import Profile from './pages/profile';
+import ProfileAnalysis from './pages/profileanalysis';
+import MockInterview from './pages/mockinterview';
+import SkillEvaluation from './pages/skillevaluation';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -26,6 +29,18 @@ const router = createBrowserRouter([
   {
     path: '/profile',
     element: <ProtectedRoute><Profile /></ProtectedRoute>,
+  },
+  {
+    path: '/profile-analysis',
+    element: <ProtectedRoute><ProfileAnalysis /></ProtectedRoute>,
+  },
+  {
+    path: '/mock-interview',
+    element: <ProtectedRoute><MockInterview /></ProtectedRoute>,
+  },
+  {
+    path: '/skill-evaluation',
+    element: <ProtectedRoute><SkillEvaluation /></ProtectedRoute>,
   },
   {
     path: '/roadmap',

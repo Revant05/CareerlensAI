@@ -37,7 +37,10 @@ export default function Dashboard() {
   return (
     <AnimatedPage className="dashboard-container">
       <nav className="dashboard-nav glass-panel">
-        <GlitchText text="CareerLens AI" as="div" className="nav-logo" />
+        <div className="nav-branding">
+          <img className="logo" src="logo.jpeg" alt="Logo" />
+          <GlitchText text="CareerLens AI" as="div" className="nav-logo" />
+        </div>
         <div className="nav-profile">
           <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
             <User size={18} style={{ marginRight: '5px' }} /> {user?.name || 'User'}
@@ -52,10 +55,6 @@ export default function Dashboard() {
       </nav>
 
       <div className="dashboard-wrapper container">
-        <div className="hero-chart-aside glass-panel">
-          <SkillChart />
-        </div>
-
         <section className="hero-section">
           <Motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -79,6 +78,10 @@ export default function Dashboard() {
           </Motion.div>
         </section>
 
+        <div className="hero-chart-aside glass-panel">
+          <SkillChart />
+        </div>
+
         <section className="features-section">
           <div className="section-header">
             <h2 className="section-title">Everything You Need to Succeed</h2>
@@ -95,6 +98,7 @@ export default function Dashboard() {
               icon={<User size={24} />}
               title="Profile Analysis"
               desc="Deep dive into your professional profile to identify strengths."
+              onClick={() => navigate('/profile-analysis')}
             />
 
             <Motion.div
@@ -113,6 +117,7 @@ export default function Dashboard() {
               icon={<MessageSquare size={24} />}
               title="Mock Interviews"
               desc="Practice with AI-driven interview simulations."
+              onClick={() => navigate('/mock-interview')}
             />
 
             <FeatureCard
@@ -128,9 +133,10 @@ export default function Dashboard() {
             />
 
             <FeatureCard
-              icon={<Users size={24} />}
-              title="Mentor Network"
-              desc="Connect with industry experts in your field."
+              icon={<BarChart2 size={24} />}
+              title="Skill Evaluation"
+              desc="Assess your technical and soft skills comprehensively."
+              onClick={() => navigate('/skill-evaluation')}
             />
           </Motion.div>
         </section>
@@ -139,11 +145,13 @@ export default function Dashboard() {
   );
 }
 
-const FeatureCard = ({ icon, title, desc }) => (
+const FeatureCard = ({ icon, title, desc, onClick }) => (
   <Motion.div
     variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
     className="feature-card glass-panel"
     whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.03)' }}
+    onClick={onClick}
+    style={{ cursor: onClick ? 'pointer' : 'default' }}
   >
     <div className="feature-icon">{icon}</div>
     <h3>{title}</h3>

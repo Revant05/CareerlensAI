@@ -11,6 +11,8 @@ const data = [
 
 const COLORS = ['#3b82f6', '#2563eb', '#1d4ed8', '#60a5fa', '#93c5fd'];
 
+import './skillchart.css';
+
 const SkillChart = () => {
   return (
     <div className="mini-chart-container">
@@ -27,10 +29,11 @@ const SkillChart = () => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#1e293b', 
-              border: '1px solid #3b82f6', 
+          <Tooltip
+            formatter={(value) => `${value}%`}
+            contentStyle={{
+              backgroundColor: '#1e293b',
+              border: '1px solid #3b82f6',
               borderRadius: '8px',
               color: '#fff'
             }}
@@ -38,6 +41,17 @@ const SkillChart = () => {
           />
         </PieChart>
       </ResponsiveContainer>
+
+      <div className="chart-stats">
+        <div className="stat-item">
+          <span className="stat-label">My Progress</span>
+          <span className="stat-value">78%</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Complete Score</span>
+          <span className="stat-value complete">92%</span>
+        </div>
+      </div>
     </div>
   );
 };

@@ -9,7 +9,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import GlitchText from '../components/GlitchText';
 import './roadmap.css';
 
-// ==========================================
+// =========================================
 // 1. THE COMPLETE DATA (ALL DOMAINS)
 // ==========================================
 
@@ -545,7 +545,15 @@ export const RoadmapDetail = () => {
               {step.sub.every(s => progress.completedNodes?.includes(s)) ? <CheckCircle size={20} /> : idx + 1}
             </div>
             <div className="step-card glass-panel">
-              <h3>{step.title}</h3>
+              <h3>
+                {step.link ? (
+                  <a href={step.link} target="_blank" rel="noopener noreferrer" className="step-link">
+                    {step.title}
+                  </a>
+                ) : (
+                  step.title
+                )}
+              </h3>
               <ul className="step-list">
                 {step.sub.map((s, i) => {
                   const isChecked = progress.completedNodes?.includes(s);
