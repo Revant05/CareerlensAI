@@ -1,0 +1,136 @@
+.student-jobs-page {
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.jobs-header {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.job-search-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border-radius: 20px;
+    width: 300px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.job-search-input:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    opacity: 0.5;
+}
+
+.nav-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.job-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.job-card-header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.company-logo {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 243, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.company-name {
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.job-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.job-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.job-requirements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.req-tag {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.job-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.job-actions button {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 0.6rem;
+}
+
+.msg-btn {
+    border-color: rgba(0, 243, 255, 0.3);
+}
+
+.no-jobs {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.jobs-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem;
+    gap: 1rem;
+}
