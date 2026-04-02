@@ -1,16 +1,102 @@
-# React + Vite
+# CareerLensAI 🚀
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered career guidance platform that helps students assess skills, practice mock interviews, explore learning roadmaps, and connect with recruiters.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
 
-## React Compiler
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19 + Vite, React Router, Framer Motion |
+| Backend | Node.js, Express.js, MongoDB (Mongoose) |
+| AI Engine | Python, FastAPI, Google Gemini (via LangChain) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+carrerlensAI/
+├── src/                    # React frontend
+│   ├── pages/              # All page components + their CSS
+│   ├── components/         # Shared reusable components
+│   ├── context/            # Auth & Theme context providers
+│   ├── api/                # Axios API client config
+│   └── router.jsx          # App routing
+│
+├── server/                 # Node.js backend
+│   ├── routes/             # API route handlers
+│   ├── models/             # Mongoose data models
+│   ├── middleware/         # Auth & error middleware
+│   └── scripts/            # One-time DB setup scripts
+│
+├── ai-engine/              # Python FastAPI AI service
+│   ├── main.py             # FastAPI app + endpoints
+│   ├── agents_logic.py     # AI agent orchestration
+│   └── schema.py           # Pydantic request/response schemas
+│
+└── public/                 # Static assets (logo, etc.)
+```
+
+---
+
+## Running the Project
+
+You need **3 terminals** running simultaneously.
+
+### 1. Backend (Node.js)
+```powershell
+cd server
+npm run dev        # dev mode with nodemon
+# npm start        # production mode
+```
+Runs on: `http://localhost:5000` (or as set in `server/.env`)
+
+### 2. AI Engine (Python / FastAPI)
+```powershell
+# Activate virtual environment first
+.\.venv\Scripts\Activate.ps1
+
+python ai-engine/main.py
+```
+Runs on: `http://localhost:8001`
+
+### 3. Frontend (React / Vite)
+```powershell
+npm run dev
+```
+Runs on: `http://localhost:5173`
+
+> **Start order:** Backend → AI Engine → Frontend
+
+---
+
+## One-Time Database Setup
+
+After starting the backend for the first time:
+
+```powershell
+# Seed roadmap data
+node server/scripts/seed.js
+
+# Create admin account
+node server/scripts/seed_admin.js
+```
+
+To look up an OTP from the database (dev utility):
+```powershell
+node server/scripts/get_otp.js
+```
+
+---
+
+## Features
+
+- 🎯 **Mock Interviews** — AI-driven interview sessions with real-time feedback
+- 📊 **Profile Analysis** — Resume & skill gap analysis
+- 🗺️ **Learning Roadmaps** — Role-based & skill-based learning paths
+- 🧠 **Skill Evaluation** — Timed assessments with scoring
+- 💬 **Messaging** — Student ↔ Recruiter communication
+- 🧑‍💼 **Recruiter Dashboard** — Job posting & candidate scanning
+- 🔐 **Admin Dashboard** — User management & platform oversight

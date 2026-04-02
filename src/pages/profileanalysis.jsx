@@ -16,13 +16,28 @@ export default function ProfileAnalysis() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchProfile = async () => {
+        try {
+            setRefreshing(true);
+            const res = await api.get('/auth/me');
+            setProfile(res.data);
+            setLastUpdated(new Date());
+        } catch (err) {
+            toast.error('Failed to refresh profile data.');
+            // Fall back to context user if API fails
+            if (user && !profile) setProfile(user);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
     useEffect(() => {
-        if (user) {
-            setProfile(user);
-            setLoading(false);
-        }
-    }, [user]);
+        fetchProfile();
+    }, []);
 
     if (loading) return <div className="loader-container">Analyzing Your Career Profile...</div>;
     if (!profile) return <div className="loader-container">No profile data found. Please log in again.</div>;
@@ -38,6 +53,26 @@ export default function ProfileAnalysis() {
                 </button>
                 <GlitchText text="Career Intelligence Dashboard" />
                 <p className="analysis-subtitle">AI-Powered Career Gap Analysis & Strategic Roadmap</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                    {lastUpdated && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Last updated: {lastUpdated.toLocaleTimeString()}
+                        </span>
+                    )}
+                    <Motion.button
+                        onClick={fetchProfile}
+                        disabled={refreshing}
+                        style={{
+                            background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.4)',
+                            color: 'var(--primary)', borderRadius: '8px', padding: '6px 14px',
+                            cursor: refreshing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
+                        }}
+                        whileHover={{ scale: refreshing ? 1 : 1.05 }}
+                    >
+                        <TrendingUp size={14} />
+                        {refreshing ? 'Refreshing...' : 'Refresh Analysis'}
+                    </Motion.button>
+                </div>
             </div>
 
             {/* Tab Navigation */}

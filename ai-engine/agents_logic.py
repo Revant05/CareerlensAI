@@ -1,369 +1,676 @@
+import os
+import json
 import random
+from groq import AsyncGroq
+from dotenv import load_dotenv
+
+# Load from root .env (works locally and allows override via system env when hosted)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "careerlens_default_67890")
+
+# Model selection — Groq free tier
+FAST_MODEL = "llama-3.1-8b-instant"       # Question generation (low latency)
+SMART_MODEL = "llama-3.3-70b-versatile"   # Deep analysis (high quality)
+
+client = AsyncGroq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+
+# ─────────────────────────────────────────────────────
+# DOMAIN SYSTEM PROMPTS — All 24 domains + General
+# ─────────────────────────────────────────────────────
+DOMAIN_PROMPTS = {
+    "frontend developer": """You are a senior Frontend Engineer conducting a technical interview at a top tech company.
+Cover these areas progressively (easy → hard):
+- HTML5 semantics, CSS3, Flexbox/Grid, Responsive design
+- JavaScript ES6+: closures, promises, async/await, event loop
+- React: hooks, virtual DOM, reconciliation, state management (Redux/Zustand/Context)
+- Performance: code splitting, lazy loading, Web Vitals (FCP, LCP, CLS), Lighthouse
+- Testing: Jest, React Testing Library, Cypress, TDD
+- Security: XSS, CSRF, CSP headers, HTTPS, CORS
+- Build tools: Vite, Webpack, tree shaking, bundling
+- Accessibility: ARIA, WCAG, screen reader compatibility
+Ask ONE question at a time. Acknowledge the answer briefly, then ask the next question. Mix technical depth with real-world scenarios. After 6 exchanges, introduce a behavioral/scenario question.""",
+
+    "backend developer": """You are a senior Backend Engineer interviewing for a Node.js/Express backend role.
+Cover these areas progressively:
+- REST API design principles, HTTP methods, status codes, versioning
+- Node.js: event loop, non-blocking I/O, streams, clustering
+- Databases: MongoDB/Mongoose, SQL vs NoSQL, indexing, aggregation, N+1 problem
+- Authentication: JWT, OAuth2, refresh tokens, session management
+- Security: SQL injection, rate limiting, input validation, secrets management
+- Caching: Redis, CDN, cache invalidation strategies
+- Microservices: API Gateway, service discovery, message queues (Kafka/RabbitMQ)
+- System design: scalability, load balancing, horizontal vs vertical scaling
+Ask ONE question at a time. Acknowledge the answer. Increase complexity progressively.""",
+
+    "full stack developer": """You are a full-stack engineering interviewer covering both frontend and backend.
+Alternate between frontend and backend topics:
+- Frontend: React, state management, CSS, performance, browser APIs
+- Backend: Node.js, databases, API design, authentication
+- Integration: how frontend communicates with backend, CORS, API contracts
+- DevOps basics: CI/CD, deployment, environment variables, Docker basics
+- Architecture: MVC, separation of concerns, project structure
+- Real-world problem solving: debugging, code review, system design
+Ask ONE question at a time. Cover both worlds. After 8 exchanges, ask a full-stack architecture scenario question.""",
+
+    "devops engineer": """You are a senior DevOps Engineer interviewing a candidate for a DevOps role.
+Cover these areas:
+- Linux: process management, shell scripting, file permissions, systemd
+- Docker: containers vs VMs, Dockerfile best practices, multi-stage builds
+- Kubernetes: pods, deployments, services, ingress, HPA, namespaces
+- CI/CD: GitHub Actions, Jenkins, pipeline stages, blue-green deployments
+- Infrastructure as Code: Terraform, Ansible, CloudFormation
+- Cloud: AWS/GCP/Azure core services (EC2, S3, RDS, Lambda, VPCs)
+- Monitoring: Prometheus, Grafana, ELK stack, alerting strategies
+- Security: secrets management (Vault), least privilege, network policies
+Ask ONE question at a time. Mix theory with real incident scenarios.""",
+
+    "devsecops engineer": """You are a DevSecOps Engineer interviewing for a role that bridges DevOps and security.
+Cover:
+- OWASP Top 10 and how to mitigate each in a CI/CD pipeline
+- Static Application Security Testing (SAST) and Dynamic Testing (DAST)
+- Secrets management: HashiCorp Vault, AWS Secrets Manager, environment isolation
+- Container security: image scanning, rootless containers, network policies
+- Supply chain security: dependency scanning, SBOM, Sigstore
+- Compliance: SOC2, PCI-DSS, GDPR implications in infrastructure design
+- Threat modeling: STRIDE framework, attack surface analysis
+- Incident response: playbooks, SIEM, forensics
+Ask ONE question at a time. Emphasize real-world breach scenarios.""",
+
+    "ai engineer": """You are a senior AI/ML Engineer interviewing for an AI Engineering role.
+Cover:
+- LLM fundamentals: transformer architecture, attention mechanisms, tokenization
+- Prompt engineering: few-shot, chain-of-thought, RAG (Retrieval-Augmented Generation)
+- Vector databases: Pinecone, Chroma, FAISS, embeddings, similarity search
+- LangChain/LlamaIndex: agents, chains, memory, tools
+- Model serving: FastAPI, Triton, vLLM, quantization (GGUF, AWQ)
+- Fine-tuning: LoRA, QLoRA, PEFT, dataset preparation, RLHF
+- Evaluation: benchmarking LLMs, hallucination detection, safety guardrails
+- MLOps for LLMs: experiment tracking, model registry, A/B testing
+Ask ONE question at a time. Blend theory with practical implementation.""",
+
+    "data analyst": """You are a senior Data Analyst conducting a technical interview.
+Cover:
+- SQL: complex joins, window functions, CTEs, subqueries, query optimization
+- Python/Pandas: data cleaning, groupby, merge, pivot, handling missing values
+- Statistics: mean/median/mode, standard deviation, hypothesis testing, p-values
+- Data visualization: Tableau, Power BI, Matplotlib, Seaborn - best practices
+- Excel: VLOOKUP, pivot tables, conditional formatting, macros
+- Business intelligence: KPIs, metrics definition, stakeholder communication
+- A/B testing: experimental design, sample size, statistical significance
+- Data quality: validation, anomaly detection, data governance
+Ask ONE question at a time. Include real business scenario questions.""",
+
+    "ai & data scientist": """You are a senior Data Scientist/ML researcher conducting an interview.
+Cover:
+- Classical ML: regression, classification, clustering, ensemble methods (XGBoost, Random Forest)
+- Deep learning: CNNs, RNNs, LSTMs, Transformers, backpropagation
+- Feature engineering: selection, encoding categorical variables, feature scaling, PCA
+- Model evaluation: precision/recall/F1, ROC-AUC, cross-validation, bias-variance
+- Optimization: gradient descent variants, learning rate scheduling, regularization (L1/L2)
+- Statistics: Bayesian inference, probability distributions, hypothesis testing
+- Python stack: scikit-learn, PyTorch/TensorFlow, NumPy, Pandas, Jupyter
+- Research skills: reading papers, implementing architectures, ablation studies
+Ask ONE progressive question at a time.""",
+
+    "data engineer": """You are a senior Data Engineer interviewing for a data engineering position.
+Cover:
+- ETL/ELT pipelines: design, scheduling, error handling, idempotency
+- Apache Spark: RDDs, DataFrames, transformations vs actions, partitioning, optimization
+- Apache Kafka: topics, partitions, consumer groups, exactly-once semantics
+- Airflow: DAGs, operators, sensors, XComs, backfilling
+- Cloud data services: AWS Glue, BigQuery, Redshift, Databricks, Snowflake
+- Data modeling: star schema, snowflake schema, data vault, slowly changing dimensions
+- Stream processing vs batch processing: trade-offs, Lambda vs Kappa architecture
+- Data quality: Great Expectations, dbt, data contracts
+Ask ONE question at a time. Include pipeline design scenarios.""",
+
+    "android developer": """You are a senior Android Engineer conducting a technical interview.
+Cover:
+- Android lifecycle: Activity, Fragment, ViewModel, LiveData/StateFlow
+- Jetpack Compose: composables, state hoisting, recomposition, side effects
+- Architecture: MVVM, MVI, Clean Architecture, Repository pattern
+- Coroutines and Kotlin: suspend functions, Flow, structured concurrency, channels
+- Dependency injection: Hilt, Koin, manual DI
+- Navigation: Navigation Component, deep links, back stack management
+- Background work: WorkManager vs Service vs Coroutines, Foreground services
+- Performance: memory leaks (LeakCanary), ANR prevention, profiling
+- Testing: JUnit, Mockito, Espresso, MockK, Robolectric
+Ask ONE question at a time. Include real scenario debugging questions.""",
+
+    "ios developer": """You are a senior iOS Engineer conducting a technical interview.
+Cover:
+- Swift fundamentals: optionals, protocols, extensions, generics, property wrappers
+- Memory management: ARC, retain cycles, weak/unowned references, instruments
+- UIKit vs SwiftUI: when to use each, UIViewControllerRepresentable bridging
+- SwiftUI: @State, @Binding, @ObservedObject, @EnvironmentObject, view lifecycle
+- Concurrency: async/await, actors, Task, Combine framework
+- Architecture: MVVM, VIPER, Clean Swift, Coordinator pattern
+- Networking: URLSession, Codable, REST, error handling, offline support
+- App Store: code signing, provisioning profiles, TestFlight, App Review guidelines
+- Performance: instruments, Xcode profiler, memory/CPU optimization
+Ask ONE question at a time.""",
+
+    "postgresql dba": """You are a senior PostgreSQL DBA conducting a database engineering interview.
+Cover:
+- Query optimization: EXPLAIN ANALYZE, query planner, index types (B-tree, GIN, GiST, BRIN)
+- Indexing strategies: partial indexes, composite indexes, covering indexes, index bloat
+- VACUUM and autovacuum: dead tuples, table bloat, bloat monitoring, VACUUM FULL vs regular
+- Replication: streaming replication, logical replication, HA with Patroni/repmgr
+- Transactions: ACID properties, isolation levels, MVCC, deadlocks, advisory locks
+- Performance tuning: shared_buffers, work_mem, effective_cache_size, connection pooling (PgBouncer)
+- Partitioning: range, list, hash partitioning, partition pruning
+- Security: row-level security, pg_hba.conf, SSL, roles and permissions
+Ask ONE question at a time. Include real production incident scenarios.""",
+
+    "blockchain developer": """You are a senior Blockchain/Web3 Engineer conducting a technical interview.
+Cover:
+- Ethereum fundamentals: EVM, gas mechanics, account types (EOA vs contract), nonces
+- Solidity: data types, storage vs memory vs calldata, visibility, modifiers, events
+- Smart contract security: reentrancy, integer overflow, front-running, access control
+- DeFi protocols: AMMs (Uniswap), lending (Aave), yield farming, liquidity pools
+- Web3.js/Ethers.js: connecting wallets, signing transactions, event listeners
+- Layer 2: Optimistic rollups, ZK rollups, Polygon, Arbitrum, Optimism
+- NFTs: ERC-721, ERC-1155, metadata storage, IPFS, marketplaces
+- Testing: Hardhat, Foundry, unit testing smart contracts, gas optimization
+Ask ONE question at a time. Include audit/security scenario questions.""",
+
+    "qa engineer": """You are a senior QA Engineer conducting a technical interview.
+Cover:
+- Test strategy: test pyramid, unit/integration/E2E testing, shift-left testing
+- Manual testing: test case design, boundary value analysis, equivalence partitioning, exploratory testing
+- API testing: Postman, REST Assured, contract testing (Pact), performance testing (k6, JMeter)
+- UI automation: Selenium, Playwright, Cypress, page object model, test data management
+- Mobile testing: Appium, XCUITest, Espresso, device farms
+- Performance testing: load testing, stress testing, spike testing, bottleneck identification
+- CI/CD integration: test pipelines, test reporting, flaky test management
+- Accessibility testing: axe-core, screen readers, WCAG validation
+Ask ONE question at a time. Include real bug discovery and reproduction scenarios.""",
+
+    "software architect": """You are a principal Software Architect interviewing a senior engineering candidate.
+Cover:
+- Design patterns: SOLID principles, creational/structural/behavioral patterns, anti-patterns
+- System design: scalability, availability, consistency (CAP theorem), distributed systems
+- Architecture styles: microservices vs monolith, event-driven, CQRS, event sourcing
+- API design: REST vs GraphQL vs gRPC, API versioning, backward compatibility
+- Database design: normalization, sharding, replication, polyglot persistence
+- Security architecture: zero-trust, defense in depth, OAuth2/OIDC
+- Observability: distributed tracing (Jaeger), structured logging, SLOs/SLAs/SLIs
+- Trade-off analysis: build vs buy, technical debt management, architectural decision records
+Ask ONE deep question at a time. Focus on architectural trade-offs and real-world constraints.""",
+
+    "cyber security": """You are a senior Cybersecurity Engineer conducting a technical security interview.
+Cover:
+- Network security: TCP/IP stack, firewalls, IDS/IPS, VPNs, network segmentation, zero-trust
+- Web application security: OWASP Top 10 in depth, WAF bypass techniques, SSRF, XXE
+- Penetration testing: reconnaissance (OSINT), exploitation (Metasploit), post-exploitation, reporting
+- Cryptography: symmetric vs asymmetric, PKI, TLS handshake, certificate management, hashing
+- Incident response: kill chain, MITRE ATT&CK framework, forensics, chain of custody
+- Cloud security: IAM policies, S3 bucket security, VPC design, CloudTrail, GuardDuty
+- Malware analysis: static vs dynamic analysis, sandboxing, reverse engineering basics
+- Compliance: ISO 27001, NIST framework, GDPR, SOC2, penetration test methodologies
+Ask ONE question at a time. Include real attack scenario analysis.""",
+
+    "ux designer": """You are a senior UX Designer/Researcher conducting a design interview.
+Cover:
+- Design process: design thinking (empathize, define, ideate, prototype, test), double diamond
+- User research: qualitative vs quantitative methods, user interviews, surveys, usability testing
+- Information architecture: card sorting, tree testing, sitemap design, navigation patterns
+- Interaction design: affordances, feedback, error states, micro-interactions, animation principles
+- Visual design: typography, color theory, grid systems, visual hierarchy, Gestalt principles
+- Prototyping: Figma, Sketch, Adobe XD, fidelity levels, interactive prototyping
+- Accessibility: WCAG 2.1, inclusive design, color contrast, keyboard navigation
+- Metrics: task completion rate, SUS score, NPS, time-on-task, conversion optimization
+- Collaboration: working with developers (design handoff), stakeholder presentations, design systems
+Ask ONE question at a time. Include portfolio/case study questions.""",
+
+    "game developer": """You are a senior Game Developer conducting a technical interview.
+Cover:
+- Game engine architecture: Unity (MonoBehaviour lifecycle, coroutines, physics, rendering pipeline) or Unreal (Blueprints vs C++, UObject lifecycle)
+- Game math: vectors, quaternions, matrices, interpolation (lerp/slerp), coordinate systems
+- Game physics: rigid body dynamics, collision detection (AABB, SAT), raycasting
+- Performance optimization: draw call batching, LOD, occlusion culling, profiling, memory pooling
+- Game design patterns: entity-component system, observer, state machine, object pooling
+- Networking: authoritative server, client prediction, lag compensation, rollback netcode
+- Shaders: HLSL/GLSL basics, vertex/fragment shaders, post-processing effects
+- Audio: spatial audio, audio mixing, procedural audio, compression
+Ask ONE technical question at a time. Include game design scenario questions.""",
+
+    "mlops engineer": """You are a senior MLOps Engineer conducting a technical interview.
+Cover:
+- ML pipeline design: data ingestion, preprocessing, training, evaluation, deployment, monitoring
+- MLflow: experiment tracking, model registry, model versioning, UI, logging
+- Feature stores: Feast, Tecton, offline vs online features, point-in-time correctness
+- Model deployment: REST APIs (FastAPI), batch scoring, streaming inference, A/B testing
+- Model monitoring: data drift (Evidently), concept drift, prediction distribution shifts
+- CI/CD for ML: GitHub Actions for model training, DVC for data versioning, CML
+- Infrastructure: Kubernetes for ML workloads, GPU scheduling, AWS SageMaker, Vertex AI
+- Reproducibility: Docker for ML, random seeds, data versioning, experiment logging
+Ask ONE question at a time. Include production incident scenarios.""",
+
+    "product manager": """You are a VP of Product conducting a product management interview.
+Cover:
+- Product strategy: vision, roadmap prioritization (RICE, ICE, MoSCoW), OKRs
+- User research: customer interviews, personas, jobs-to-be-done framework
+- Metrics: defining success metrics, north star metric, funnel analysis, cohort analysis
+- Stakeholder management: influencing without authority, executive communication, cross-team alignment
+- Prioritization: technical debt vs features, MVP definition, working with engineering on trade-offs
+- Product discovery: hypothesis-driven development, experiment design, feature validation
+- Go-to-market: positioning, pricing strategy, launch planning, adoption metrics
+- Technical literacy: APIs, system design basics, working with engineers, understanding constraints
+Ask ONE question at a time. Include real product scenario and case study questions.""",
+
+    "engineering manager": """You are a Director of Engineering conducting an engineering manager interview.
+Cover:
+- Team leadership: hiring, onboarding, performance management, career development, PIPs
+- Technical direction: architectural decisions, tech debt strategy, technical roadmap
+- Delivery: sprint planning, estimation, risk management, stakeholder communication
+- Culture: psychological safety, blameless postmortems, engineering culture, diversity
+- Conflict resolution: engineer conflicts, cross-team dependencies, escalation handling
+- Metrics: DORA metrics (deployment frequency, lead time, MTTR, change failure rate), team health
+- 1:1s: effective 1:1 structure, feedback conversations, coaching vs directing
+- Scaling: growing from 5 to 50 engineers, org design, team topologies
+Ask ONE question at a time. Include real team management scenarios.""",
+
+    "developer relations": """You are a Head of Developer Relations conducting a DevRel interview.
+Cover:
+- Developer advocacy: community building, developer empathy, feedback loops to product
+- Technical content: blog posts, tutorials, sample code quality, documentation standards
+- Public speaking: conference talks, workshops, live coding, audience engagement
+- Community management: Discord/Slack moderation, forum engagement, developer champions programs
+- SDK/API experience: dogfooding, DX (Developer Experience) feedback, API design review
+- Social presence: Twitter/X, YouTube, GitHub, technical thought leadership
+- Metrics: developer NPS, API adoption, community growth, content engagement, event ROI
+- Cross-team collaboration: product feedback loop, working with engineering, sales enablement
+Ask ONE question at a time. Include scenario questions about difficult community situations.""",
+
+    "bi analyst": """You are a senior BI Engineer/Analyst conducting a business intelligence interview.
+Cover:
+- SQL advanced: window functions (RANK, ROW_NUMBER, LAG/LEAD), CTEs, stored procedures
+- Data warehousing: Kimball vs Inmon, star schema, slowly changing dimensions, fact vs dimension tables
+- BI tools: Tableau, Power BI (DAX), Looker (LookML), Metabase — hands-on depth
+- ETL/ELT: dbt, Fivetran, Stitch, transformation logic, incremental loading
+- KPIs and metrics: metric definition, metric trees, vanity vs actionable metrics
+- Storytelling: dashboard design principles, executive reporting, chart type selection
+- Data governance: lineage, documentation (data catalogs like Alation/Atlan), data quality
+- Statistical analysis: cohort analysis, funnel analysis, regression for business insights
+Ask ONE question at a time. Include real business analysis scenarios.""",
+
+    "top companies interview": """You are a FAANG-level principal engineer conducting a comprehensive interview for a senior engineer role.
+This interview covers 4 areas in depth:
+1. System Design (50%): Design large-scale distributed systems — streaming platforms, ride-sharing, social graphs, payment systems
+2. Technical Depth (25%): Deep CS fundamentals — algorithms, data structures, time/space complexity
+3. Leadership Principles (15%): Amazon/Google/Meta leadership principles, conflict resolution, technical decisions under uncertainty
+4. Culture/Behavioral (10%): Growth mindset, failure stories, impact measurement
+
+Start with a brief intro, then dive into a system design problem. After they answer, probe deeper with follow-up constraints. Mix in leadership and behavioral questions naturally.
+This should feel like a rigorous but fair senior-level interview.""",
+
+    "general": """You are a professional interviewer conducting a COMPREHENSIVE general interview. This covers FIVE structured phases based on conversation length:
+
+PHASE 1 — Introduction & Background (first 4 exchanges):
+Ask about: name, educational background, degree/field, key projects, overall experience level, what brought them to this field.
+
+PHASE 2 — Technical Breadth (next 4 exchanges, messages 5-8):
+Ask broad CS fundamentals: OOP principles, data structures, basic algorithms, how the web works, understanding of databases, version control (Git). Keep questions broad, not role-specific.
+
+PHASE 3 — Soft Skills & Communication (next 4 exchanges, messages 9-12):
+Ask about: teamwork, communication style, how they handle feedback, working in remote/distributed teams, dealing with difficult colleagues, presenting technical ideas to non-technical stakeholders.
+
+PHASE 4 — Behavioral Analysis using STAR method (next 4 exchanges, messages 13-16):
+Ask situational/behavioral questions: biggest failure and what they learned, most impactful project, conflict with a teammate, time they had to learn something quickly under pressure, example of taking ownership.
+
+PHASE 5 — Personal & Motivation (messages 17+):
+Ask about: 5-year career goal, what excites them most about technology, their learning habits, side projects or open source contributions, work-life balance style, salary expectations (light touch), why they're interested in this opportunity.
+
+IMPORTANT: Track which phase you're in based on the conversation length. Ask ONE question per turn. Be warm, professional, and encouraging. Acknowledge each answer naturally before asking the next question."""
+}
+
+# ─────────────────────────────────────────────────────
+# FALLBACK STATIC QUESTIONS (used if Groq API fails)
+# ─────────────────────────────────────────────────────
+FALLBACK_QUESTIONS = {
+    "default": [
+        "Tell me about yourself and your technical background.",
+        "What is your most technically challenging project and how did you solve the problems you faced?",
+        "How do you approach debugging a problem you've never seen before?",
+        "Describe a time you had to learn a new technology quickly. How did you approach it?",
+        "How do you ensure code quality in your projects?",
+        "What is your approach to documentation?",
+        "How do you handle disagreements with teammates about technical decisions?",
+        "Tell me about a production incident you dealt with. What was your process?",
+        "What are you currently learning and why?",
+        "Where do you see yourself in 3-5 years technically?"
+    ]
+}
+
+
+def normalize_domain(domain: str) -> str:
+    """Map raw domain strings (IDs or titles) to our prompt keys."""
+    d = domain.lower().strip()
+
+    # Direct ID matches first (from frontend role.id)
+    exact_map = {
+        'frontend': 'frontend developer',
+        'backend': 'backend developer',
+        'fullstack': 'full stack developer',
+        'full-stack': 'full stack developer',
+        'devops': 'devops engineer',
+        'devsecops': 'devsecops engineer',
+        'ai-engineer': 'ai engineer',
+        'data-analyst': 'data analyst',
+        'ai-data-scientist': 'ai & data scientist',
+        'data-engineer': 'data engineer',
+        'android': 'android developer',
+        'ios': 'ios developer',
+        'postgresql': 'postgresql dba',
+        'blockchain': 'blockchain developer',
+        'qa': 'qa engineer',
+        'software-architect': 'software architect',
+        'cyber-security': 'cyber security',
+        'ux-design': 'ux designer',
+        'game-developer': 'game developer',
+        'mlops': 'mlops engineer',
+        'product-manager': 'product manager',
+        'engineering-manager': 'engineering manager',
+        'devrel': 'developer relations',
+        'bi-analyst': 'bi analyst',
+        'top-companies': 'top companies interview',
+        'general': 'general',
+    }
+    if d in exact_map:
+        return exact_map[d]
+
+    # Fuzzy fallback
+    if 'frontend' in d or 'front-end' in d: return 'frontend developer'
+    elif 'backend' in d or 'back-end' in d: return 'backend developer'
+    elif 'fullstack' in d or 'full stack' in d: return 'full stack developer'
+    elif 'devops' in d and 'sec' not in d and 'ml' not in d: return 'devops engineer'
+    elif 'devsecops' in d: return 'devsecops engineer'
+    elif 'ai engineer' in d: return 'ai engineer'
+    elif 'data analyst' in d: return 'data analyst'
+    elif 'data scientist' in d or 'scientist' in d: return 'ai & data scientist'
+    elif 'data engineer' in d: return 'data engineer'
+    elif 'android' in d: return 'android developer'
+    elif 'ios' in d: return 'ios developer'
+    elif 'postgresql' in d or 'dba' in d: return 'postgresql dba'
+    elif 'blockchain' in d or 'web3' in d: return 'blockchain developer'
+    elif 'qa' in d or 'quality' in d: return 'qa engineer'
+    elif 'architect' in d: return 'software architect'
+    elif 'cyber' in d or 'security' in d: return 'cyber security'
+    elif 'ux' in d or 'design' in d: return 'ux designer'
+    elif 'game' in d: return 'game developer'
+    elif 'mlops' in d: return 'mlops engineer'
+    elif 'product manager' in d: return 'product manager'
+    elif 'engineering manager' in d: return 'engineering manager'
+    elif 'devrel' in d: return 'developer relations'
+    elif 'bi ' in d or 'bi analyst' in d: return 'bi analyst'
+    elif 'top compan' in d or 'faang' in d: return 'top companies interview'
+    else: return 'general'
+
+
+def build_conversation_messages(history: list, system_prompt: str) -> list:
+    """Convert flat history list into Groq message format."""
+    messages = [{"role": "system", "content": system_prompt}]
+    for i, msg in enumerate(history):
+        if msg.strip():
+            role = "assistant" if i % 2 == 0 else "user"
+            messages.append({"role": role, "content": msg.strip()})
+    return messages
+
 
 class CareerAgents:
+
     @staticmethod
-    async def get_interviewer_question(domain: str, history: list):
-        # AI INTELLIGENCE: Topic State Machine for "Human-like" interviewing
-        # We categorize questions by 'difficulty' and 'topic'
-        ALLOWED_DOMAINS = ["frontend", "backend", "general", "cybersecurity", "datascience"]
-        topic_pool = {
-            "frontend": {
-                "performance": [
-                    {"q": "How do you optimize a React application?", "level": 1},
-                    {"q": "Explain the reconciliation algorithm in React and how it relates to performance.", "level": 2},
-                    {"q": "How would you handle performance bottlenecks in a list with 10,000 items without using external libraries?", "level": 3},
-                    {"q": "Describe your strategy for reducing First Contentful Paint (FCP) in a media-heavy Next.js app.", "level": 2},
-                    {"q": "How do you implement code-splitting at the component level versus the route level?", "level": 2}
-                ],
-                "state": [
-                    {"q": "How would you handle global state management?", "level": 1},
-                    {"q": "What are the trade-offs between Context API and dedicated libraries like Redux or Zustand?", "level": 2},
-                    {"q": "Describe a scenario where using Redux would actually be a 'bad' architectural choice.", "level": 3},
-                    {"q": "Explain the concept of 'State Staleness' in React hooks and how to prevent it.", "level": 3}
-                ],
-                "security": [
-                    {"q": "How do you prevent XSS attacks in a React application?", "level": 1},
-                    {"q": "Explain the implementation of Content Security Policy (CSP) headers for a modern SPA.", "level": 2},
-                    {"q": "What is 'Clickjacking', and how do you protect a sensitive dashboard from it?", "level": 3}
-                ],
-                "ux_behavioral": {
-                    "scenarios": [
-                        "A stakeholder wants to push a feature that clearly violates accessibility standards. How do you handle this conflict?",
-                        "Your app is slow in production for 5% of users in low-bandwidth regions. What is your investigative process?"
-                    ]
-                }
-            },
-            "backend": {
-                "databases": [
-                    {"q": "Explain SQL vs NoSQL for a career platform.", "level": 1},
-                    {"q": "How do you handle database indexing for frequently searched fields like 'Job Skills'?", "level": 2},
-                    {"q": "Explain how you would implement a distributed lock mechanism in a database.", "level": 3},
-                    {"q": "How do you handle 'N+1' query problems in an ORM like Mongoose or Sequelize?", "level": 2}
-                ],
-                "security": [
-                    {"q": "How do you prevent SQL injection?", "level": 1},
-                    {"q": "Explain the OAuth2.0 flow and how you'd secure a public API.", "level": 2},
-                    {"q": "How do you protect against sophisticated Replay Attacks in a stateless architecture?", "level": 3}
-                ],
-                "system_design": [
-                    {"q": "How would you design a rate-limiting service that handles 1 million requests per second?", "level": 3},
-                    {"q": "Explain the CAP theorem and how it influences your choice of a distributed data store.", "level": 2}
-                ],
-                "devops_behavioral": {
-                    "scenarios": [
-                        "A critical production database is under a DDoS attack. Walk me through your immediate 15-minute response plan.",
-                        "You discover a massive data leak caused by a 3rd party library. How do you communicate this to the CTO?"
-                    ]
-                }
-            },
-            "cybersecurity": {
-                "networking": [
-                    {"q": "Explain the difference between Symmetric and Asymmetric encryption with real-world use cases.", "level": 1},
-                    {"q": "How does a Man-in-the-Middle (MitM) attack work on a public WiFi, and how can HSTS prevent it?", "level": 2}
-                ],
-                "pentesting": [
-                    {"q": "What is the difference between an 'Exploit' and a 'Payload' in the context of Metasploit?", "level": 2},
-                    {"q": "Walk me through your process for privilege escalation after gaining initial access to a Linux server.", "level": 3}
-                ]
-            },
-            "datascience": {
-                "modeling": [
-                    {"q": "What is the difference between L1 and L2 regularization? When would you use each?", "level": 2},
-                    {"q": "Explain the 'Bias-Variance Tradeoff' in the context of a model that is over-performing on training data.", "level": 1}
-                ],
-                "infrastructure": [
-                    {"q": "How do you deploy a machine learning model as a scalable REST API using FastAPI and Docker?", "level": 2},
-                    {"q": "Explain the concept of 'Data Drift' and how you monitor it in a production pipeline.", "level": 3}
-                ]
-            },
-            "android": {
-                "core": [
-                    {"q": "Explain the activity lifecycle in Android.", "level": 1},
-                    {"q": "What is the difference between an Intent and a Bundle?", "level": 1},
-                    {"q": "How does the Jetpack Compose re-composition process work?", "level": 2}
-                ],
-                "architecture": [
-                    {"q": "Explain MVVM architecture in the context of Android development.", "level": 2},
-                    {"q": "How would you handle background processing using WorkManager versus Coroutines?", "level": 3}
-                ]
-            },
-            "ios": {
-                "swift": [
-                    {"q": "What are Optionals in Swift and how do you unwrap them safely?", "level": 1},
-                    {"q": "Explain the difference between 'struct' and 'class' in Swift.", "level": 1},
-                    {"q": "How does Automatic Reference Counting (ARC) work in iOS?", "level": 2}
-                ],
-                "ui": [
-                    {"q": "Compare UIKit and SwiftUI. In what scenario would you choose one over the other?", "level": 2},
-                    {"q": "How do you handle safe area insets in a complex UI layout?", "level": 2}
-                ]
-            },
-            "blockchain": {
-                "smart_contracts": [
-                    {"q": "What is GAS in Etherium and how is it calculated?", "level": 1},
-                    {"q": "Explain the difference between PoW and PoS consensus mechanisms.", "level": 2},
-                    {"q": "How do you prevent Reentrancy attacks in a Solidity smart contract?", "level": 3}
-                ]
-            },
-            "firm_level": {
-                "architecture": [
-                    {"q": "How would you design a scalable system that can handle 10,000 concurrent users?", "level": 3},
-                    {"q": "Explain the trade-offs between consistency and availability in a distributed system.", "level": 2},
-                    {"q": "How do you approach database sharding for an application with global users?", "level": 3}
-                ],
-                "behavioral": [
-                    {"q": "Tell me about a time you had to make a difficult technical decision with partial information.", "level": 2},
-                    {"q": "How do you handle conflicts between product requirements and technical debt?", "level": 2}
-                ],
-                "leadership": [
-                    {"q": "How do you mentor junior developers or promote best practices in a team?", "level": 2},
-                    {"q": "Describe your process for conducting a high-impact code review.", "level": 1}
-                ]
-            },
-            "case_studies": {
-                "frontend": "A high-traffic e-commerce site is experiencing 'Jank' on mobile during the checkout flow. The CPU profile shows heavy scripting tasks. How do you isolate the component responsible and what architectural changes would you propose?",
-                "backend": "You are migrating a monolithic user service to microservices. Halfway through, you notice data inconsistency between the old SQL DB and the new NoSQL store. How do you resolve this with zero downtime?",
-                "security": "A zero-day vulnerability is discovered in the 'OpenSSL' library used by your entire infrastructure. You have 200 microservices. How do you coordinate a rapid patch without taking the system offline?",
-                "datascience": "Your recommendation model has started showing a bias towards a specific demographic, leading to legal concerns. Path trace why this is happening and propose a 'Fairness-by-Design' fix.",
-                "firm_level": "Our platform is expanding to 10 new countries next month. Our current single-region infrastructure won't handle the latency. Walk me through your global expansion blueprint including DNS, Data residency, and Edge caching."
-            },
-            "general": {
-                "leadership": ["How do you handle a team member who is consistently underperforming?", "Describe a time you lead a project with ambiguous requirements."],
-                "growth": ["How do you stay up to date with the rapidly changing landscape of your chosen field?", "What is one technical skill you've struggled with and how did you overcome it?"],
-                "hobbies": ["Tell me about your hobbies outside of work.", "Does your hobby influence how you approach problem-solving?"]
-            }
-        }
+    async def get_interviewer_question(domain: str, history: list) -> str:
+        """
+        Generate the next interview question using Groq LLM.
+        Falls back to static questions if API is unavailable.
+        """
+        domain_key = normalize_domain(domain)
+        system_prompt = DOMAIN_PROMPTS.get(domain_key, DOMAIN_PROMPTS["general"])
 
-        # Normalize domain
-        # Normalize domain
-        domain_lower = domain.lower()
-        if "top" in domain_lower or "company" in domain_lower:
-            dk = "firm_level"
-        elif "front" in domain_lower:
-            dk = "frontend"
-        elif "back" in domain_lower:
-            dk = "backend"
-        elif "android" in domain_lower:
-            dk = "android"
-        elif "ios" in domain_lower:
-            dk = "ios"
-        elif "block" in domain_lower:
-            dk = "blockchain"
-        elif "cyber" in domain_lower or "security" in domain_lower:
-            dk = "cybersecurity"
-        elif "data" in domain_lower:
-            dk = "datascience"
-        else:
-            dk = "general"
-        
-        # Validation
-        ALLOWED_DOMAINS = list(topic_pool.keys())
-        if dk not in ALLOWED_DOMAINS:
-            dk = "general"
-            
-        domain_topics = topic_pool.get(dk, topic_pool["general"])
-        
-        # 1. State Tracking: What have we asked?
-        asked_q_texts = [m.lower() for m in history]
-        num_user_msgs = len([m for m in history if "|||" not in m]) # Simplistic count
-
-        # 2. Context Extraction & Personalized Greeting
-        if not history:
-            if dk == "firm_level":
-                return f"Welcome to the {domain} screening. This is a FAANG-style comprehensive evaluation designed to assess your architecture, leadership, and systemic thinking skills. To begin, please introduce yourself and your career highlights."
-            return f"Hello! I am your AI interviewer for the {domain} position. To get started, could you please tell me your name and a bit about your background?"
-
-        last_resp = history[-1].lower()
-        
-        # Personalized Greeting / Name Recognition
-        if len(history) <= 2:
-            name_indicators = ["i am ", "my name is ", "this is ", "it's ", "i'm "]
-            user_name = None
-            for indicator in name_indicators:
-                if indicator in last_resp:
-                    user_name = last_resp.split(indicator)[-1].strip().split()[0].capitalize()
-                    break
-            
-            if user_name:
-                return f"Pleasure to meet you, {user_name}. Let's dive into the technical side. To start, {random.choice(domain_topics.get('performance', [{'q': 'how do you approach problem solving?'}])[0]['q'] if isinstance(domain_topics.get('performance'), list) else ['how do you approach problem solving?'])}"
-            elif "hello" in last_resp or "hi" in last_resp:
-                 return "Hello! Let's get started. What field of study or professional area do you specialize in within this domain?"
-
-        # 3. Collaborative Acknowledgement & Follow-up
-        acknowledgements = [
-            "That's a solid explanation. ",
-            "I see your point on that. ",
-            "Interesting perspective. ",
-            "Clear and concise. ",
-            "Great, let's build on that. "
-        ]
-        prefix = random.choice(acknowledgements) if random.random() > 0.3 else ""
-
-        # Semantic Linkage for Follow-ups
-        if any(word in last_resp for word in ["hobby", "passion", "coding", "practice"]):
-            if "platform" not in asked_q_texts:
-                return prefix + "Since you mentioned your passion for coding, which platforms or open-source projects have you contributed to recently?"
-        
-        if any(word in last_resp for word in ["optimiz", "perf", "slow", "bottleneck"]):
-            return prefix + "Interesting point on performance. How do you measure these optimizations? Do you use specialized profiling tools like Lighthouse or Chrome DevTools?"
-
-        if "security" in last_resp or "vulnerab" in last_resp:
-            return prefix + "You mentioned security. How do you balance the trade-off between strict security protocols and developer velocity?"
-
-        # Trigger Behavioral Scenarios if technical talk is too abstract or user provided a good answer
-        if len(history) > 6 and random.random() > 0.6:
-            behavioral_cat = f"{dk}_behavioral"
-            if behavioral_cat in domain_topics:
-                scenario = random.choice(domain_topics[behavioral_cat]["scenarios"])
-                if scenario.lower() not in asked_q_texts:
-                    return prefix + f"Let's move to a scenario: {scenario}"
-
-        # 3. Topic Depth vs Breadth Logic
-        for topic, q_list in domain_topics.items():
-            if isinstance(q_list, dict) and "scenarios" in q_list:
-                continue # Handled by behavioral trigger
-            
-            if isinstance(q_list[0], dict):
-                # Check if we already started this topic
-                topic_asked = [q for q in q_list if q["q"].lower() in asked_q_texts]
-                if topic_asked:
-                    # Topic started, try to go deeper (Level 1 -> 2 -> 3)
-                    max_lvl = max(q["level"] for q in topic_asked)
-                    
-                    # If we finished Level 3, trigger a Case Study for that Domain
-                    if max_lvl >= 3:
-                        case_study = topic_pool.get("case_studies", {}).get(dk)
-                        if case_study and case_study.lower() not in asked_q_texts:
-                            return f"Excellent depth on those topics. Let's move to a Real-World Case Study: {case_study}"
-                    
-                    next_lvl_qs = [q["q"] for q in q_list if q["level"] == max_lvl + 1 and q["q"].lower() not in asked_q_texts]
-                    if next_lvl_qs:
-                        return random.choice(next_lvl_qs)
-                    # If topic fully explored, loop will move to next topic (Topic Switching)
-                    continue
-                else:
-                    # Start new topic at Level 1
-                    lvl1_qs = [q["q"] for q in q_list if q["level"] == 1]
-                    if lvl1_qs:
-                        return random.choice(lvl1_qs)
+        # Opening greeting — short and domain-specific
+        if not history or all(not h.strip() for h in history):
+            domain_display = domain_key.title()
+            if "top companies" in domain_key:
+                return ("Welcome. I'm your FAANG-style interviewer today — we'll cover system design, "
+                        "technical depth, and leadership. Let's begin: please introduce yourself briefly.")
+            elif "general" in domain_key:
+                return ("Hello! I'm your AI interviewer. We'll cover background, tech, teamwork, "
+                        "and career goals. Let's start — tell me your name and what got you into tech.")
             else:
-                # Handle simple list (general topics)
-                for q in q_list:
-                    if q.lower() not in asked_q_texts:
-                        return q
+                return (f"Hi! I'm your {domain_display} interviewer. "
+                        f"Let's begin — give me a quick intro: your name and your experience with {domain_key}.")
 
-        return "We have covered a lot of technical ground! Finally, how do you handle high-pressure deadlines in a production environment?"
+        # Try Groq API
+        if client:
+            try:
+                messages = build_conversation_messages(history, system_prompt)
+                messages.append({
+                    "role": "user",
+                    "content": ("Based on the conversation so far, ask the next most appropriate interview question. "
+                                "Ask ONE question only. Keep it focused and specific. "
+                                "Briefly acknowledge the candidate's last response naturally before asking.")
+                })
+
+                response = await client.chat.completions.create(
+                    model=FAST_MODEL,
+                    messages=messages,
+                    max_tokens=300,
+                    temperature=0.7
+                )
+                question = response.choices[0].message.content.strip()
+                return question
+
+            except Exception as e:
+                print(f"[Groq API Error - question gen]: {e}")
+                # Fall through to static fallback
+
+        # Static fallback
+        fallback = FALLBACK_QUESTIONS.get("default", [])
+        asked = [m.lower() for m in history]
+        for q in fallback:
+            if q.lower() not in asked:
+                return q
+        return "We've covered a lot of ground. What would you like to highlight as your biggest technical strength?"
 
     @staticmethod
-    async def run_deep_analysis(transcript: list, domain: str):
-        # 1. Topic-Specific Technical Keywords (Real-World High Density)
-        tech_dictionary = {
-            "frontend": [
-                "react", "component", "state", "props", "hook", "useeffect", "usestate", "virtual dom", "reconciliation",
-                "performance", "optimization", "bundling", "vite", "webpack", "css", "flexbox", "grid", "responsive",
-                "accessibility", "aria", "redux", "zustand", "context api", "memorization", "usememo", "usecallback",
-                "next.js", "ssr", "static site generation", "lighthouse", "fcp", "lcp", "cls", "hydration", "code splitting"
-            ],
-            "backend": [
-                "node", "express", "middleware", "api", "rest", "endpoint", "database", "sql", "nosql", "mongodb",
-                "indexing", "authentication", "jwt", "oauth", "scalability", "caching", "redis", "docker", "microservices",
-                "containerization", "kubernetes", "distribute", "load balancer", "n+1", "aggregation", "pipeline", "stateless"
-            ],
-            "cybersecurity": [
-                "encryption", "symmetric", "asymmetric", "hsts", "mitm", "metasploit", "exploit", "payload", "privilege",
-                "escalation", "firewall", "ids", "ips", "penetration", "zero-day", "brute force", "xss", "csrf", "sqli"
-            ],
-            "datascience": [
-                "regularization", "l1", "l2", "bias", "variance", "docker", "fastapi", "deployment", "drift", "monitoring",
-                "regression", "classification", "neural network", "transformer", "overfitting", "underfitting", "sampling"
-            ],
-            "general": ["experience", "challenge", "problem", "solution", "team", "collaboration", "leadership", "communication", "growth", "learning", "agile", "scrum", "deadline", "stakeholder"]
-        }
+    async def run_deep_analysis(transcript: list, domain: str) -> dict:
+        """
+        Analyze the full interview transcript using Groq LLM.
+        Returns structured performance metrics.
+        """
+        domain_key = normalize_domain(domain)
 
-        # Determine domain key
-        dk = "frontend" if "front" in domain.lower() else "backend" if "back" in domain.lower() else "general"
-        required_keywords = tech_dictionary.get(dk, tech_dictionary["general"])
+        # Build transcript text for analysis
+        user_msgs = [m["content"] for m in transcript if m.get("role") == "user"]
+        ai_msgs = [m["content"] for m in transcript if m.get("role") == "assistant"]
 
-        # 2. Extract User Content
-        user_msgs = [m["content"].lower() for m in transcript if m["role"] == "user"]
+        if not user_msgs:
+            return CareerAgents._default_analysis()
+
         all_user_text = " ".join(user_msgs)
-        
         total_words = len(all_user_text.split())
-        num_user_msgs = len(user_msgs)
-        avg_length = total_words / num_user_msgs if num_user_msgs > 0 else 0
+        avg_len = total_words / len(user_msgs) if user_msgs else 0
 
-        # 3. Technical Accuracy Heuristic (Keyword Matching)
-        matched_keywords = [word for word in required_keywords if word in all_user_text]
-        keyword_density = len(matched_keywords) / len(required_keywords) if required_keywords else 0
-        
-        # Penalize short answers even if keywords match (lack of explanation)
-        # Penalize long answers with no keywords (waffle/incorrect)
-        base_tech = 40  # Start with a low base
-        keyword_bonus = int(keyword_density * 50)  # Max 50 points for keywords
-        length_bonus = min(10, int(avg_length / 2)) # Max 10 points for depth
-        
-        tech_score = base_tech + keyword_bonus + length_bonus
-        
-        # 4. Soft Skills Heuristic (Vocabulary Diversity & Response Patterns)
-        unique_words = len(set(all_user_text.split()))
-        vocab_diversity = unique_words / total_words if total_words > 0 else 0
-        
-        soft_score = 50 + int(vocab_diversity * 40) + min(10, num_user_msgs * 2)
+        if client:
+            try:
+                transcript_text = "\n".join([
+                    f"{'Interviewer' if m.get('role') == 'assistant' else 'Candidate'}: {m['content']}"
+                    for m in transcript
+                ])
 
-        # Cap scores
-        tech_score = min(99, max(15, tech_score))
-        soft_score = min(99, max(20, soft_score))
+                analysis_prompt = f"""You are an expert interview performance analyst. Analyze this {domain} interview transcript and return a JSON object.
 
-        # 5. Dynamic SWOT Generation
+TRANSCRIPT:
+{transcript_text}
+
+Return ONLY valid JSON with exactly these fields:
+{{
+  "technical_score": <integer 0-100, based on technical depth and accuracy of answers>,
+  "soft_skills_score": <integer 0-100, based on communication clarity, structure, and professionalism>,
+  "strengths": [<list of 2-4 specific strengths observed, as short phrases>],
+  "weaknesses": [<list of 2-3 specific areas for improvement, as short phrases>],
+  "emotional_status": <one of: "Confident", "Analytical", "Nervous", "Eager", "Determined">,
+  "behavioral_score": <integer 0-100, based on soft skills and behavioral responses>,
+  "communication_clarity": <integer 0-100>,
+  "key_topics_covered": [<list of 3-5 technical topics the candidate demonstrated knowledge in>]
+}}
+
+Be specific and honest. Base scores on actual answer quality, not length."""
+
+                response = await client.chat.completions.create(
+                    model=SMART_MODEL,
+                    messages=[
+                        {"role": "system", "content": "You are an expert interview analyst. Return only valid JSON, no extra text."},
+                        {"role": "user", "content": analysis_prompt}
+                    ],
+                    max_tokens=600,
+                    temperature=0.3,
+                    response_format={"type": "json_object"}
+                )
+
+                result = json.loads(response.choices[0].message.content)
+
+                return {
+                    "technical_score": min(99, max(10, int(result.get("technical_score", 60)))),
+                    "soft_skills_score": min(99, max(10, int(result.get("soft_skills_score", 60)))),
+                    "strengths": result.get("strengths", ["Participated actively"]),
+                    "weaknesses": result.get("weaknesses", ["Needs more specificity in answers"]),
+                    "emotional_status": result.get("emotional_status", "Analytical"),
+                    "behavioral_score": min(99, max(10, int(result.get("behavioral_score", 60)))),
+                    "communication_clarity": min(99, max(10, int(result.get("communication_clarity", 60)))),
+                    "key_topics_covered": result.get("key_topics_covered", []),
+                    "matched_keywords": result.get("key_topics_covered", [])
+                }
+
+            except Exception as e:
+                print(f"[Groq API Error - analysis]: {e}")
+
+        # Heuristic fallback (no API)
+        return CareerAgents._heuristic_analysis(user_msgs, domain_key, avg_len, total_words)
+
+    @staticmethod
+    async def get_live_analysis(partial_transcript: list, domain: str) -> dict:
+        """
+        Quick real-time analysis of partial transcript for live metrics.
+        Uses the fast model for low latency.
+        """
+        user_msgs = [m["content"] for m in partial_transcript if m.get("role") == "user"]
+        if not user_msgs or not client:
+            return {"running_score": 60, "sentiment": "neutral", "topics_detected": [], "pace_feedback": "Keep going"}
+
+        try:
+            recent_text = " ".join(user_msgs[-3:])  # Only last 3 answers for speed
+            response = await client.chat.completions.create(
+                model=FAST_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a real-time interview coach. Return only JSON."},
+                    {"role": "user", "content": f"""Briefly analyze this partial interview response for {domain}:
+"{recent_text}"
+Return JSON: {{"running_score": <0-100>, "sentiment": <"positive"/"neutral"/"nervous">, "topics_detected": [<up to 3 topics mentioned>], "pace_feedback": <"good"/"too brief"/"very detailed">}}"""}
+                ],
+                max_tokens=150,
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            return {
+                "running_score": min(99, max(10, int(data.get("running_score", 60)))),
+                "sentiment": data.get("sentiment", "neutral"),
+                "topics_detected": data.get("topics_detected", []),
+                "pace_feedback": data.get("pace_feedback", "good")
+            }
+        except Exception as e:
+            print(f"[Groq live analysis error]: {e}")
+            return {"running_score": 60, "sentiment": "neutral", "topics_detected": [], "pace_feedback": "Keep going"}
+
+    @staticmethod
+    async def get_support_advise(status: str) -> str:
+        """Generate personalized emotional support message based on performance status."""
+        if client:
+            try:
+                response = await client.chat.completions.create(
+                    model=FAST_MODEL,
+                    messages=[
+                        {"role": "system", "content": "You are a warm, encouraging career coach. Give concise, specific motivational feedback in 2-3 sentences."},
+                        {"role": "user", "content": f"The interview candidate showed a '{status}' emotional state. Give them personalized, specific encouragement and one actionable tip to improve."}
+                    ],
+                    max_tokens=150,
+                    temperature=0.8
+                )
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"[Groq support advise error]: {e}")
+
+        # Static fallback
+        advice_map = {
+            "Confident": "Excellent energy! Your confidence is a major asset. Keep that momentum — back your confidence with specific examples to make an even stronger impression.",
+            "Analytical": "Your structured thinking is impressive. That precision and logic will serve you well in leadership roles. Try to also weave in stories of impact.",
+            "Nervous": "You're doing better than you think! Take a breath — nerves show you care. Focus on what you know best and speak at a comfortable pace.",
+            "Eager": "Your enthusiasm is contagious! Channel that energy into depth — go one level deeper on technical answers to really stand out.",
+            "Determined": "That grit is exactly what top companies look for. Consistency and persistence are superpowers. Keep building on each answer."
+        }
+        for key, advice in advice_map.items():
+            if key.lower() in status.lower():
+                return advice
+        return "Stay focused and consistent. Every interview — win or learn. You're building skills that compound over time."
+
+    @staticmethod
+    def _heuristic_analysis(user_msgs: list, domain_key: str, avg_len: float, total_words: int) -> dict:
+        """Fallback heuristic analysis when Groq is unavailable."""
+        # Domain-specific keywords
+        KEYWORD_BANKS = {
+            "frontend developer": ["react", "component", "state", "hook", "css", "javascript", "performance", "dom", "bundle", "webpack", "vite", "accessibility", "responsive"],
+            "backend developer": ["api", "database", "mongodb", "sql", "node", "express", "authentication", "jwt", "cache", "redis", "microservice", "docker"],
+            "general": ["experience", "project", "team", "challenge", "solution", "leadership", "communication", "learn", "problem", "collaborate"]
+        }
+        keywords = KEYWORD_BANKS.get(domain_key, KEYWORD_BANKS["general"])
+        all_text = " ".join(user_msgs).lower()
+        matched = [k for k in keywords if k in all_text]
+        keyword_density = len(matched) / len(keywords) if keywords else 0
+
+        unique_words = len(set(all_text.split()))
+        vocab_diversity = unique_words / max(1, total_words)
+
+        tech_score = min(99, max(15, int(40 + keyword_density * 50 + min(10, avg_len / 2))))
+        soft_score = min(99, max(20, int(50 + vocab_diversity * 40 + min(10, len(user_msgs) * 2))))
+
         strengths = []
         weaknesses = []
+        if keyword_density > 0.5: strengths.append("Strong technical vocabulary")
+        elif keyword_density > 0.2: strengths.append("Foundational knowledge demonstrated")
+        else: weaknesses.append("Limited use of domain-specific terminology")
+        if avg_len > 25: strengths.append("Detailed and articulate responses")
+        elif avg_len < 10: weaknesses.append("Answers too brief — needs more elaboration")
+        if vocab_diversity > 0.6: strengths.append("Rich and varied communication style")
 
-        if keyword_density > 0.5:
-            strengths.append("High technical accuracy")
-        elif keyword_density > 0.2:
-            strengths.append("Foundational knowledge present")
-        else:
-            weaknesses.append("Significant technical gaps identified")
+        if not strengths: strengths = ["Consistent participation throughout"]
+        if not weaknesses: weaknesses = ["Could add more specific technical implementation details"]
 
-        if avg_length > 20:
-            strengths.append("Profound articulation depth")
-        elif avg_length < 10:
-            weaknesses.append("Excessively concise; needs more detail")
+        emotional_status = "Confident" if tech_score > 80 else "Analytical" if tech_score > 60 else "Nervous"
 
-        if vocab_diversity > 0.6:
-            strengths.append("Sophisticated professional vocabulary")
-        elif vocab_diversity < 0.3:
-            weaknesses.append("Repetitive phrasing detected")
-
-        # Fallback if empty
-        if not strengths: strengths = ["Consistent participation"]
-        if not weaknesses: weaknesses = ["Could demonstrate more specific implementation details"]
-
-        # Determination of status
-        emotional_status = "Confident" if tech_score > 85 else "Analytical" if tech_score > 65 else "Nervous"
-        
         return {
             "technical_score": tech_score,
             "soft_skills_score": soft_score,
             "strengths": strengths,
             "weaknesses": weaknesses,
             "emotional_status": emotional_status,
-            "matched_keywords": matched_keywords
+            "behavioral_score": soft_score,
+            "communication_clarity": min(99, int(soft_score * 0.9)),
+            "key_topics_covered": matched[:5],
+            "matched_keywords": matched
         }
 
     @staticmethod
-    async def get_support_advise(status: str):
-        # LOGIC: Provide emotional grounding
-        advice_map = {
-            "Anxious": "You're doing great. Take a deep breath; your technical scores are impressive! Focus on your breathing and take your time.",
-            "Confident": "Excellent energy! Your confidence is a major asset. Keep that momentum going into your next challenge.",
-            "Analytic": "Great precision in your thoughts. Your structured approach will take you far in technical leadership.",
-            "Eager": "That passion is contagious! Channel that energy into deep-diving into specific edge cases.",
-            "Determined": "I see that grit! Consistency is your superpower. You are on the right track."
+    def _default_analysis() -> dict:
+        return {
+            "technical_score": 50, "soft_skills_score": 50,
+            "strengths": ["Participated in the interview"],
+            "weaknesses": ["No sufficient data to analyze"],
+            "emotional_status": "Analytical",
+            "behavioral_score": 50, "communication_clarity": 50,
+            "key_topics_covered": [], "matched_keywords": []
         }
-        
-        for key, advice in advice_map.items():
-            if key.lower() in status.lower():
-                return advice
-        
-        return "Stay focused. Consistency is the key to mastering this domain. Every session makes you stronger."

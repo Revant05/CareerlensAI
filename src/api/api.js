@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-export const AI_ENGINE_URL = 'http://localhost:8001';
+// Hosting-ready: reads from .env (VITE_ prefix required by Vite)
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const AI_ENGINE_URL = import.meta.env.VITE_AI_ENGINE_URL || 'http://localhost:8001';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
-    headers: {
-        'Content-Type': 'application/json'
-    }
+    baseURL: API_BASE_URL,
+    headers: { 'Content-Type': 'application/json' }
 });
 
 // Request Interceptor: Attach Token
@@ -15,14 +15,11 @@ api.interceptors.request.use(
         const token = localStorage.getItem('token');
         if (token) {
             config.headers['x-auth-token'] = token;
-            // Also support standard Bearer for scalability
             config.headers['Authorization'] = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Response Interceptor: Global Error Handling
@@ -30,7 +27,6 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Global Session Expiry Handling
             localStorage.removeItem('token');
             window.location.href = '/login';
         }

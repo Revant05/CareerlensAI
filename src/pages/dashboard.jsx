@@ -1,32 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
-import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield } from 'lucide-react';
+import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';
 import SkillChart from '../components/skillchart.jsx';
 import GlitchText from '../components/GlitchText';
+import api from '../api/api';
 import './dashboard.css';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [liveUser, setLiveUser] = useState(user);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Fetch fresh user data from DB on mount
+  useEffect(() => {
+    const fetchLiveData = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        setLiveUser(res.data);
+        setUser(res.data); // update global context too
+      } catch (err) {
+        setLiveUser(user); // fallback to context
+      } finally {
+        setDataLoaded(true);
+      }
+    };
+    fetchLiveData();
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const activeUser = liveUser || user;
+
   const container = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   const item = {
@@ -48,8 +64,8 @@ export default function Dashboard() {
         </div>
         <div className="nav-profile">
           <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
-            {user?.role === 'admin' ? <Shield size={18} style={{ marginRight: '5px' }} /> : <User size={18} style={{ marginRight: '5px' }} />}
-            {user?.name || 'User'}
+            {activeUser?.role === 'admin' ? <Shield size={18} style={{ marginRight: '5px' }} /> : <User size={18} style={{ marginRight: '5px' }} />}
+            {activeUser?.name || 'User'}
           </button>
           <button onClick={toggleTheme} className="logout-btn" title="Toggle Theme" style={{ marginRight: '10px' }}>
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -73,7 +89,7 @@ export default function Dashboard() {
               <GlitchText text="Career Journey" as="span" className="hero-glitch" />
             </h1>
             <p className="hero-subtitle">
-              Get personalized roadmaps, skill assessments, and AI-driven advice to accelerate your professional growth.
+              Welcome back, <strong>{activeUser?.name?.split(' ')[0] || 'there'}</strong>. Your AI career engine is ready.
             </p>
             <div className="hero-content-wrapper">
               <div className="hero-actions">
@@ -103,7 +119,9 @@ export default function Dashboard() {
             <FeatureCard
               icon={<User size={24} />}
               title="Profile Analysis"
-              desc={`${user?.completedRoadmaps?.length || 0} Roadmaps Analyzed. Click for deep dive.`}
+              desc={dataLoaded
+                ? `${activeUser?.assessments?.length || 0} assessments · ${activeUser?.completedRoadmaps?.length || 0} roadmaps done`
+                : 'Loading your data...'}
               onClick={() => navigate('/profile-analysis')}
             />
 
@@ -115,7 +133,10 @@ export default function Dashboard() {
             >
               <div className="feature-icon"><Map size={24} color="#6366f1" /></div>
               <h3>Career Roadmap</h3>
-              <p>{user?.completedRoadmaps?.length > 0 ? "Continue your journey." : "Start your first roadmap today."}</p>
+              <p>{activeUser?.completedRoadmaps?.length > 0
+                ? `${activeUser.completedRoadmaps.length} completed · Keep going!`
+                : 'Start your first roadmap today.'}
+              </p>
               <span className="card-action">View Path →</span>
             </Motion.div>
 
@@ -136,14 +157,18 @@ export default function Dashboard() {
             <FeatureCard
               icon={<Award size={24} />}
               title="Achievements"
-              desc={`You have earned ${user?.tokens?.length || 0} career tokens.`}
+              desc={dataLoaded
+                ? `${activeUser?.tokens?.length || 0} career tokens earned`
+                : 'Loading achievements...'}
               onClick={() => navigate('/profile')}
             />
 
             <FeatureCard
               icon={<Users size={24} />}
               title="Practice Interview"
-              desc="Real-time AI-powered technical & behavioral practice."
+              desc={dataLoaded && activeUser?.assessments?.filter(a => a.type === 'mock_interview').length > 0
+                ? `${activeUser.assessments.filter(a => a.type === 'mock_interview').length} interviews completed`
+                : 'Real-time AI-powered practice — all 24 roles.'}
               onClick={() => navigate('/mock-interview')}
             />
 
