@@ -11,19 +11,13 @@ export default function Header() {
     const location = useLocation();
     
     // Derived state instead of effect
-    const showNudge = user && user.role === 'student' && (!user.personalizedRoadmap || !user.isProfileComplete);
+
 
     if (!user) return null;
 
     return (
         <>
-            {showNudge && location.pathname !== '/profile' && location.pathname !== '/roadmap' && (
-                <div className="nudge-banner">
-                    <Zap size={14} className="nudge-icon" />
-                    <span>Achieve your aspirations! Complete your profile and unlock your Personalized AI Roadmap.</span>
-                    <Link to="/roadmap" className="nudge-link">View Roadmap</Link>
-                </div>
-            )}
+
             
             <header className="main-header glass-panel">
                 <div className="header-logo">
