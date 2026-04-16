@@ -6,9 +6,7 @@ const StudentSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, default: 'student' },
     headline: { type: String, default: 'Aspiring Learner' },
-    aspiration: { type: String, default: '' },           // legacy (kept for compat)
-    aspirations: { type: [String], default: [] },        // NEW: multi-aspiration tags
-    personalizedRoadmap: { type: mongoose.Schema.Types.Mixed, default: null }, // AI-generated cache
+    aspiration: { type: String, default: '' },
     phone: { type: String, default: '' },
     isVerifiedEmail: { type: Boolean, default: false },
     isVerifiedPhone: { type: Boolean, default: false },

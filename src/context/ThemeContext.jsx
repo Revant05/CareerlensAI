@@ -29,5 +29,8 @@ export const ThemeProvider = ({ children }) => {
     );
 };
 
+<<<<<<< HEAD
 // eslint-disable-next-line react-refresh/only-export-components
+=======
+>>>>>>> himanshu
 export const useTheme = () => useContext(ThemeContext);

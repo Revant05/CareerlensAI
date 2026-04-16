@@ -16,30 +16,13 @@ export default function ProfileAnalysis() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
-    const [lastUpdated, setLastUpdated] = useState(null);
-    const [refreshing, setRefreshing] = useState(false);
-
-    const fetchProfile = async () => {
-        try {
-            setRefreshing(true);
-            const res = await api.get('/auth/me');
-            setProfile(res.data);
-            setLastUpdated(new Date());
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to refresh profile data.');
-            // Fall back to context user if API fails
-            if (user && !profile) setProfile(user);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
 
     useEffect(() => {
-        fetchProfile();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        if (user) {
+            setProfile(user);
+            setLoading(false);
+        }
+    }, [user]);
 
     if (loading) return <div className="loader-container">Analyzing Your Career Profile...</div>;
     if (!profile) return <div className="loader-container">No profile data found. Please log in again.</div>;
@@ -55,26 +38,6 @@ export default function ProfileAnalysis() {
                 </button>
                 <GlitchText text="Career Intelligence Dashboard" />
                 <p className="analysis-subtitle">AI-Powered Career Gap Analysis & Strategic Roadmap</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                    {lastUpdated && (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Last updated: {lastUpdated.toLocaleTimeString()}
-                        </span>
-                    )}
-                    <Motion.button
-                        onClick={fetchProfile}
-                        disabled={refreshing}
-                        style={{
-                            background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.4)',
-                            color: 'var(--primary)', borderRadius: '8px', padding: '6px 14px',
-                            cursor: refreshing ? 'not-allowed' : 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
-                        }}
-                        whileHover={{ scale: refreshing ? 1 : 1.05 }}
-                    >
-                        <TrendingUp size={14} />
-                        {refreshing ? 'Refreshing...' : 'Refresh Analysis'}
-                    </Motion.button>
-                </div>
             </div>
 
             {/* Tab Navigation */}
@@ -315,7 +278,7 @@ const OverviewTab = ({ analysis, profile }) => (
                 </h3>
                 <div className="analysis-grid-internal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                     <div className="metrics-column">
-                        <h4 style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>Technical vs Soft Skill Balance</h4>
+                        <h4 style={{ color: '#fff', marginBottom: '1rem' }}>Technical vs Soft Skill Balance</h4>
                         {(() => {
                             const latestAi = [...profile.assessments].reverse().find(a => a.aiInsights)?.aiInsights;
                             return (
@@ -353,7 +316,7 @@ const OverviewTab = ({ analysis, profile }) => (
                         })()}
                     </div>
                     <div className="recommendation-column">
-                        <h4 style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>Agent Recommendation</h4>
+                        <h4 style={{ color: '#fff', marginBottom: '1rem' }}>Agent Recommendation</h4>
                         {(() => {
                             const latestAi = [...profile.assessments].reverse().find(a => a.aiInsights)?.aiInsights;
                             return (
@@ -362,7 +325,7 @@ const OverviewTab = ({ analysis, profile }) => (
                                         <TrendingUp size={18} color="var(--primary)" />
                                         <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem', textTransform: 'uppercase' }}>Strategic Next Step</span>
                                     </div>
-                                    <p style={{ color: 'var(--text-main)', fontSize: '1.1rem', lineHeight: '1.6' }}>{latestAi.nextRoadmapStep}</p>
+                                    <p style={{ color: '#fff', fontSize: '1.1rem', lineHeight: '1.6' }}>{latestAi.nextRoadmapStep}</p>
                                     <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                         <Brain size={14} /> Driven by Analyst & Support Agents
                                     </div>
@@ -620,10 +583,10 @@ function analyzeProfile(profile) {
     const compatibilityScore = calculateCompatibilityScore(profile, technicalSkills, softSkills, roadmapProgress, assessments);
 
     // 4. Generate Insight
-    const compatibilityInsight = generateCompatibilityInsight(compatibilityScore, aspiration);
+    const compatibilityInsight = generateCompatibilityInsight(compatibilityScore, aspiration, technicalSkills, assessments);
 
     // 5. Identify Skills (What You Have)
-    const whatYouHave = identifySkills(technicalSkills, strengths, completedRoadmaps);
+    const whatYouHave = identifySkills(technicalSkills, strengths, completedRoadmaps, assessments);
 
     // 6. Identify Missing Skills (Next logic steps in roadmaps + aspiration gaps)
     const whatsMissing = identifyMissingSkills(aspiration, roadmapProgress, assessments);
@@ -742,7 +705,7 @@ function calculateCompatibilityScore(profile, technicalSkills, softSkills, roadm
     return Math.min(100, Math.round(score));
 }
 
-function generateCompatibilityInsight(score, aspiration) {
+function generateCompatibilityInsight(score, aspiration, skills, assessments = []) {
     if (score === 0) return "Start your journey by choosing a roadmap or taking a skill evaluation.";
 
     const role = aspiration || 'your chosen path';
@@ -751,7 +714,7 @@ function generateCompatibilityInsight(score, aspiration) {
     return `You've started your journey to ${role}. Focus on completing more nodes to build your foundation.`;
 }
 
-function identifySkills(technicalSkills, strengths, completedRoadmaps) {
+function identifySkills(technicalSkills, strengths, completedRoadmaps, assessments = []) {
     // Only return things that actually exist
     const skills = [...technicalSkills];
     completedRoadmaps.forEach(r => skills.push(`${r.roadmapId.toUpperCase()} GRADUATE`));

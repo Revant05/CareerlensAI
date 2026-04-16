@@ -25,7 +25,7 @@
     font-size: 2.2rem;
     font-weight: 800;
     margin: 0;
-    color: var(--text-main);
+    color: #fff;
     text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
 }
 
@@ -90,7 +90,7 @@
     font-size: 2.5rem;
     font-weight: 900;
     margin: 0;
-    color: var(--text-main);
+    color: #fff;
     line-height: 1;
 }
 
@@ -121,7 +121,7 @@
     margin: 0;
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--text-main);
+    color: #fff;
 }
 
 .main-section {
@@ -170,7 +170,7 @@
     line-height: 1.7;
     margin-bottom: 20px;
     font-weight: 500;
-    color: var(--text-main);
+    color: #fff;
     opacity: 1;
 }
 
@@ -188,6 +188,6 @@
 
 .outline-btn-sm:hover {
     background: var(--primary);
-    color: var(--bg-dark);
+    color: #000;
     transform: scale(1.05);
 }

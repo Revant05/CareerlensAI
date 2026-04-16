@@ -171,7 +171,7 @@
 /* Role Cards Grid */
 .role-cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.25rem;
     width: 100%;
 }
@@ -247,7 +247,7 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-main);
+    color: white;
     width: fit-content;
     margin-top: 0.5rem;
 }
@@ -332,7 +332,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #000d14;
+    background: #00050a;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -356,8 +356,8 @@
     width: 200%;
     height: 200%;
     background-image:
-        linear-gradient(rgba(0, 243, 255, 0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.07) 1px, transparent 1px);
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
     transform: perspective(1000px) rotateX(60deg) translateY(-50%);
     animation: grid-flow 20s linear infinite;
@@ -380,7 +380,7 @@
     transform: translate(-50%, -50%);
     width: 800px;
     height: 800px;
-    background: radial-gradient(circle, rgba(0, 243, 255, 0.12) 0%, rgba(0, 243, 255, 0.02) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 70%);
 }
 
 .nexus-ai-stage {
@@ -388,7 +388,7 @@
     flex-direction: column;
     align-items: center;
     gap: 4rem;
-    z-index: 10;
+    z-index: 2;
 }
 
 .nexus-ai-entity {
@@ -403,26 +403,29 @@
 .nexus-avatar-core {
     width: 200px;
     height: 200px;
-    background: rgba(0, 15, 25, 0.95);
+    background: rgba(0, 5, 10, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2.5px solid #4FACFE;
-    box-shadow: 0 0 60px rgba(79, 172, 254, 0.6), 0 0 120px rgba(79, 172, 254, 0.2), inset 0 0 30px rgba(79, 172, 254, 0.08);
-    color: var(--text-main);
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 40px rgba(0, 243, 255, 0.2);
+    color: var(--primary);
     z-index: 5;
     animation: breathe 4s ease-in-out infinite;
 }
 
 @keyframes breathe {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
-        box-shadow: 0 0 60px rgba(0, 243, 255, 0.5), inset 0 0 30px rgba(0, 243, 255, 0.05);
+        box-shadow: 0 0 40px rgba(0, 243, 255, 0.2);
     }
+
     50% {
         transform: scale(1.05);
-        box-shadow: 0 0 90px rgba(0, 243, 255, 0.7), inset 0 0 40px rgba(0, 243, 255, 0.1);
+        box-shadow: 0 0 60px rgba(0, 243, 255, 0.4);
     }
 }
 
@@ -434,7 +437,7 @@
 
 .nexus-ring {
     position: absolute;
-    border: 1.5px solid rgba(0, 243, 255, 0.5);
+    border: 1px solid rgba(0, 243, 255, 0.3);
     border-radius: 50%;
     top: 50%;
     left: 50%;
@@ -452,14 +455,14 @@
     width: 340px;
     height: 340px;
     animation: orbit 15s linear infinite reverse;
-    opacity: 0.7;
+    opacity: 0.5;
 }
 
 .r3 {
     width: 400px;
     height: 400px;
     animation: orbit 20s linear infinite;
-    opacity: 0.4;
+    opacity: 0.2;
 }
 
 @keyframes orbit {
@@ -474,7 +477,7 @@
 
 .nexus-ai-entity.speaking .nexus-avatar-core {
     border-color: var(--secondary);
-    box-shadow: 0 0 100px rgba(168, 85, 247, 0.7), inset 0 0 40px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 0 80px rgba(168, 85, 247, 0.4);
     animation: speaking-pulse 0.5s ease-in-out infinite;
 }
 
@@ -494,17 +497,14 @@
 
 .nexus-ai-status {
     position: absolute;
-    bottom: -70px;
+    bottom: -60px;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: 'Inter', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--text-main);
-    text-shadow: 0 0 15px rgba(79, 172, 254, 0.8);
-    white-space: nowrap;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    color: var(--text-muted);
 }
 
 .nexus-status-dot {
@@ -533,12 +533,10 @@
 }
 
 .nexus-viz-bar {
-    width: 4px;
+    width: 3px;
     background: linear-gradient(to top, var(--primary), var(--secondary));
     border-radius: 2px;
-    opacity: 1;
-    min-height: 5px;
-    box-shadow: 0 0 6px rgba(0, 243, 255, 0.6);
+    opacity: 0.8;
 }
 
 /* Floating HUD Transcript */
@@ -548,9 +546,9 @@
     top: 3rem;
     bottom: 8rem;
     width: 380px;
-    background: rgba(0, 10, 20, 0.92);
+    background: rgba(0, 10, 20, 0.7);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 243, 255, 0.4);
+    border: 1px solid rgba(0, 243, 255, 0.2);
     border-radius: 4px;
     display: flex;
     flex-direction: column;
@@ -567,7 +565,7 @@
 }
 
 .hud-label {
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
     font-size: 0.8rem;
     color: var(--primary);
     display: flex;
@@ -602,10 +600,9 @@
 }
 
 .hud-sender {
-    font-family: 'Inter', monospace;
-    font-size: 0.75rem;
-    opacity: 0.9;
-    font-weight: bold;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    opacity: 0.5;
 }
 
 .hud-entry.assistant .hud-sender {
@@ -617,11 +614,9 @@
 }
 
 .hud-text {
-    font-size: 1.05rem;
-    font-weight: 500;
+    font-size: 0.95rem;
     line-height: 1.6;
-    color: var(--text-main);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .hud-metrics {
@@ -638,7 +633,7 @@
     flex-direction: column;
     gap: 0.5rem;
     font-size: 0.7rem;
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .hud-bar {
@@ -714,7 +709,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
     font-weight: bold;
     letter-spacing: 1px;
@@ -733,10 +728,10 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     background-size: 100% 2px, 3px 100%;
     pointer-events: none;
-    z-index: 2;
+    z-index: 5;
 }
 
 .nexus-vignette {
@@ -745,9 +740,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.7);
+    box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.9);
     pointer-events: none;
-    z-index: 2;
+    z-index: 6;
 }
 
 /* Scrollbar HUD */
@@ -812,7 +807,7 @@
     background: rgba(255, 0, 85, 0.1);
     border-color: var(--accent);
     color: var(--accent);
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
     letter-spacing: 1px;
 }
@@ -921,7 +916,7 @@
     background: var(--primary);
     color: var(--bg-dark);
     border: none;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     letter-spacing: 2px;
     cursor: pointer;
@@ -998,14 +993,14 @@
 }
 
 .stat-label {
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
     font-size: 0.7rem;
     letter-spacing: 2px;
     color: var(--text-muted);
 }
 
 .stat-score {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 2rem;
     font-weight: bold;
 }
@@ -1073,7 +1068,7 @@
 
 .swot-block h4 {
     margin-bottom: 1rem;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 1rem;
 }
 
@@ -1099,7 +1094,7 @@
 
 .feedback-main h4,
 .critics-panel h4 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     color: var(--primary);
     margin-bottom: 1rem;
     display: flex;
@@ -1149,7 +1144,7 @@
     background: var(--primary);
     color: var(--bg-dark);
     border-radius: 4px;
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
     font-weight: bold;
 }
 

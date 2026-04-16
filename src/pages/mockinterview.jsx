@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Mic, MicOff, Phone, FileText, Code, Database, Server, Gamepad2, User, TrendingUp, Clock, MessageSquare, CheckCircle, Layout, Shield, Cpu, Globe, Smartphone, Lock, Palette, Zap, Users, BarChart, Briefcase, Radio, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Phone, FileText, Code, Database, Server, Gamepad2, User, TrendingUp, Clock, MessageSquare, CheckCircle, Layout, Shield, Cpu, Globe, Smartphone, Lock, Palette, Zap, Users, BarChart, Briefcase, Radio } from 'lucide-react';
 import api, { AI_ENGINE_URL } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
@@ -46,7 +46,7 @@ const featuredInterview = {
 
 export default function MockInterview() {
     const navigate = useNavigate();
-    const { setUser } = useAuth();
+    const { user, setUser } = useAuth();
     const [selectedRole, setSelectedRole] = useState(null);
     const [interviewActive, setInterviewActive] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -61,24 +61,21 @@ export default function MockInterview() {
     });
     const [isAiThinking, setIsAiThinking] = useState(false);
     const recognitionRef = useRef(null);
-    const [speakingRate, setSpeakingRate] = useState(1.05);
     const [transcript, setTranscript] = useState([
         { role: 'assistant', content: 'Hello! I am your AI interviewer. Shall we begin?' }
     ]);
     const [interviewResults, setInterviewResults] = useState(null);
     const [showResults, setShowResults] = useState(false);
+    const [voices, setVoices] = useState([]);
     const location = useLocation();
-    // Live metrics tracking refs
-    const speechStartRef = useRef(null);
-    const totalWordsRef = useRef(0);
-    const totalSpeakingSecRef = useRef(0);
-    const fillerCountRef = useRef(0);
-    const FILLER_WORDS = ['um', 'uh', 'like', 'you know', 'basically', 'literally', 'actually', 'sort of', 'kind of', 'i mean', 'right', 'so yeah'];
 
     // Load voices and handle async nature of getVoices()
     useEffect(() => {
         const loadVoices = () => {
-            window.speechSynthesis.getVoices();
+            const availableVoices = window.speechSynthesis.getVoices();
+            if (availableVoices.length > 0) {
+                setVoices(availableVoices);
+            }
         };
 
         if ('speechSynthesis' in window) {
@@ -103,7 +100,6 @@ export default function MockInterview() {
                 handleRoleSelect(role);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     // Initialize Web Speech API
@@ -122,55 +118,17 @@ export default function MockInterview() {
                 }
 
                 if (fullStr) {
-                    // Real-time filler word detection
-                    const lower = fullStr.toLowerCase();
-                    let fillers = 0;
-                    FILLER_WORDS.forEach(fw => {
-                        const regex = new RegExp(`\\b${fw}\\b`, 'g');
-                        fillers += (lower.match(regex) || []).length;
+                    setTranscript(prev => {
+                        const newArr = [...prev];
+                        const lastMsg = newArr[newArr.length - 1];
+
+                        if (lastMsg?.role === 'user') {
+                            newArr[newArr.length - 1] = { role: 'user', content: fullStr };
+                            return newArr;
+                        } else {
+                            return [...prev, { role: 'user', content: fullStr }];
+                        }
                     });
-                    fillerCountRef.current = fillers;
-
-                    // WPM tracking
-                    const wordCount = fullStr.trim().split(/\s+/).filter(Boolean).length;
-                    totalWordsRef.current = wordCount;
-                    if (speechStartRef.current) {
-                        const elapsed = (Date.now() - speechStartRef.current) / 1000;
-                        if (elapsed > 0) totalSpeakingSecRef.current = elapsed;
-                    }
-
-                    // Dynamic confidence score
-                    const wpm = totalSpeakingSecRef.current > 0
-                        ? Math.round((totalWordsRef.current / totalSpeakingSecRef.current) * 60)
-                        : 0;
-                    const fillerPenalty = Math.min(30, fillerCountRef.current * 5);
-                    const lengthBonus = Math.min(15, Math.floor(wordCount / 5));
-                    const newConfidence = Math.max(20, Math.min(99, 70 - fillerPenalty + lengthBonus));
-
-                    const now = Date.now();
-                    const isFinal = event.results[event.results.length - 1].isFinal;
-                    
-                    if (!window.lastRecogUpdate || now - window.lastRecogUpdate > 250 || isFinal) {
-                        window.lastRecogUpdate = now;
-                        setLiveMetrics(prev => ({
-                            ...prev,
-                            fillerWords: fillerCountRef.current,
-                            speakingPace: wpm,
-                            confidence: newConfidence
-                        }));
-
-                        setTranscript(prev => {
-                            const newArr = [...prev];
-                            const lastMsg = newArr[newArr.length - 1];
-                            if (lastMsg?.role === 'user') {
-                                newArr[newArr.length - 1] = { role: 'user', content: fullStr };
-                                return newArr;
-                            } else {
-                                speechStartRef.current = now;
-                                return [...prev, { role: 'user', content: fullStr }];
-                            }
-                        });
-                    }
                 }
             };
 
@@ -209,11 +167,10 @@ export default function MockInterview() {
                 recognitionRef.current.onend = null;
                 recognitionRef.current.onresult = null;
                 recognitionRef.current.onerror = null;
-                try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+                try { recognitionRef.current.stop(); } catch (e) { }
                 recognitionRef.current = null;
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Sync state to window for the onend callback (avoids closure staleness)
@@ -223,24 +180,7 @@ export default function MockInterview() {
         window.isMutedState = isMuted;
     }, [interviewActive, isSpeaking, isAiThinking, isMuted]);
 
-    // Natural text preprocessing — adds rhythm and pauses like a real speaker
-    const humanizeText = (text) => {
-        return text
-            // Slow down after colons (listing items)
-            .replace(/:\s/g, '... ')
-            // Pause on dashes used as clauses
-            .replace(/\s—\s/g, ', ')
-            .replace(/\s-\s/g, ', ')
-            // Slight pause after "so", "now", "well" at start of sentences
-            .replace(/^(So|Now|Well|Right|Okay|Alright),?\s/i, '$1... ')
-            // Don't rush through numbers
-            .replace(/(\d+)\./g, '$1 point ')
-            // Trim any double spaces
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-    };
-
-    // AI Speaking Function — Indian accent, human pace
+    // AI Speaking Function
     const speak = (text) => {
         if (!('speechSynthesis' in window)) {
             toast.error('Speech synthesis not supported');
@@ -249,42 +189,27 @@ export default function MockInterview() {
 
         window.speechSynthesis.cancel();
 
+        // Timeout to ensure previous speak is fully cancelled in some browsers
         setTimeout(() => {
-            const processedText = humanizeText(text);
-            const utterance = new SpeechSynthesisUtterance(processedText);
+            const utterance = new SpeechSynthesisUtterance(text);
 
+            // Preference: Indian Accent (en-IN), then Google English, then any English
             const currentVoices = window.speechSynthesis.getVoices();
-
-            // Voice priority: High-quality Neural Indian → Local Indian → Google Indian → Any Natural English → Any English
-            const preferredVoice =
-                currentVoices.find(v => v.name.includes('Online (Natural) - English (India)')) || // Edge Neural Indian (extremely high quality)
-                currentVoices.find(v => v.name.includes('Neerja') && v.name.includes('Natural')) || // Edge Neural Neerja
-                currentVoices.find(v => v.name.includes('Prabhat') && v.name.includes('Natural')) || // Edge Neural Prabhat
-                currentVoices.find(v => v.name === 'Microsoft Ravi - English (India)') ||       // Windows local Indian male
-                currentVoices.find(v => v.name === 'Microsoft Heera - English (India)') ||      // Windows local Indian female
-                currentVoices.find(v => v.name.toLowerCase().includes('ravi')) ||               // Any Ravi voice
-                currentVoices.find(v => v.name.toLowerCase().includes('heera')) ||              // Any Heera voice
-                currentVoices.find(v => (v.lang === 'en-IN' || v.lang === 'en_IN') && v.name.includes('Google')) || // Chrome Google en-IN
-                currentVoices.find(v => (v.lang === 'en-IN' || v.lang === 'en_IN') && v.name.includes('Natural')) || // Any other en-IN Natural
-                currentVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN') ||           // Any en-IN
-                currentVoices.find(v => v.name.toLowerCase().includes('india')) ||              // Name has India
-                currentVoices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) || // Any English Natural voice
-                currentVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) || // Google en
-                currentVoices.find(v => v.lang.startsWith('en-')) ||
+            const preferredVoice = currentVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN') ||
+                currentVoices.find(v => v.name.includes('India') || v.name.includes('Indian')) ||
+                currentVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
+                currentVoices.find(v => v.lang.startsWith('en')) ||
                 currentVoices[0];
 
             if (preferredVoice) utterance.voice = preferredVoice;
 
-            // Human-like tuning:
-            // Using 1.0 pitch for neural voices sounds more authentic, and speakingRate for pace.
             utterance.pitch = 1.0;
-            utterance.rate = speakingRate;
-            utterance.volume = 1.0;
+            utterance.rate = 1.0;
 
             utterance.onstart = () => {
                 setIsSpeaking(true);
                 setAiStatus('Interviewer is speaking...');
-                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) { console.error(e); } }
+                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) { } }
             };
             utterance.onend = () => {
                 setIsSpeaking(false);
@@ -304,79 +229,26 @@ export default function MockInterview() {
         }, 100);
     };
 
-    // AI Speaking Function via Backend MP3 Base64 Stream (Extremely realistic Edge Neural voices)
-    const playBackendAudio = (base64Audio, fallbackText) => {
-        try {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
-            
-            const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-            audio.playbackRate = speakingRate;
-            window.currentAiAudio = audio; // Keep track for termination
-            
-            audio.onplay = () => {
-                setIsSpeaking(true);
-                setAiStatus('Interviewer is speaking...');
-                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) {} }
-            };
-            
-            audio.onended = () => {
-                setIsSpeaking(false);
-                setAiStatus('Listening...');
-                if (recognitionRef.current && !window.isMutedState) {
-                    try { recognitionRef.current.start(); } catch (e) {}
-                }
-            };
-            
-            audio.onerror = () => {
-                console.error("Audio playback error, taking fallback");
-                speak(fallbackText);
-            };
-            
-            audio.play().catch(e => {
-                console.error("Autoplay blocked:", e);
-                speak(fallbackText);
-            });
-        } catch (err) {
-            console.error("Backend audio failed:", err);
-            speak(fallbackText);
-        }
-    };
-
     // AI Question Logic
-    const fetchNextQuestion = async (currentTranscript, domainOverride = null) => {
-        const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 8000); // Hard 8s timeout
+    const fetchNextQuestion = async (currentTranscript) => {
         try {
             setIsAiThinking(true);
             setAiStatus('AI is thinking...');
-            const domainToUse = domainOverride || selectedRole || 'general';
+            const role = roles.find(r => r.id === selectedRole) || (selectedRole === featuredInterview.id ? featuredInterview : null);
 
             const response = await axios.get(`${AI_ENGINE_URL}/next-question`, {
                 params: {
-                    domain: domainToUse,
+                    domain: role?.title || 'General',
                     history: currentTranscript.map(m => m.content).join('|||')
                 },
-                headers: { 'X-Internal-Secret': 'careerlens_default_67890' },
-                signal: controller.signal
+                headers: { 'X-Internal-Secret': 'careerlens_default_67890' }
             });
 
-            clearTimeout(fetchTimeout);
             const nextQ = response.data.question;
             setTranscript(prev => [...prev, { role: 'assistant', content: nextQ }]);
-            
-            // Prefer high-quality backend streaming if provided, else use browser TTS instantly
-            if (response.data.audioBase64) {
-                playBackendAudio(response.data.audioBase64, nextQ);
-            } else {
-                speak(nextQ);
-            }
+            speak(nextQ);
         } catch (err) {
-            clearTimeout(fetchTimeout);
-            if (err.name === 'CanceledError' || err.name === 'AbortError') {
-                console.warn('AI question fetch timed out, using fallback');
-            } else {
-                console.error('AI thinking failed:', err);
-            }
+            console.error('AI thinking failed:', err);
             const fallback = "Tell me more about your recent project achievements.";
             setTranscript(prev => [...prev, { role: 'assistant', content: fallback }]);
             speak(fallback);
@@ -394,23 +266,19 @@ export default function MockInterview() {
         if (lastMessage?.role === 'user' && lastMessage.content.length > 2) {
             const timer = setTimeout(() => {
                 if (recognitionRef.current) {
-                    try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+                    try { recognitionRef.current.stop(); } catch (e) { }
                 }
                 fetchNextQuestion(transcript);
-            }, 800); // 0.8s wait is very fast, reducing analysis stall
+            }, 3000); // 3s wait is better for natural pause detection
             return () => clearTimeout(timer);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transcript, interviewActive, isAiThinking, isSpeaking]);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role.id);
         setInterviewActive(true);
-        setTranscript([]);
-        setIsSpeaking(false);
-        setAiStatus('Preparing your interview...');
-        // Fetch first question immediately — no local greeting to avoid double-speaking
-        fetchNextQuestion([], role.id);
+        setTranscript([]); // Clear to trigger initial AI question from Engine
+        fetchNextQuestion([]); // Get initial personalized greeting from Engine
     };
 
     const handleEndInterview = async () => {
@@ -439,21 +307,15 @@ export default function MockInterview() {
             }
 
             // Refresh user context to show new tokens/assessments elsewhere
-            try {
-                const userRes = await api.get('/auth/me');
-                if (setUser) setUser(userRes.data);
-            } catch (e) { console.error(e); }
+            const userRes = await api.get('/auth/me');
+            setUser(userRes.data);
 
         } catch (err) {
             console.error('Failed to save interview:', err);
             toast.error('Failed to save interview results.');
         } finally {
             if (recognitionRef.current) {
-                try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
-            }
-            if (window.currentAiAudio) {
-                window.currentAiAudio.pause();
-                window.currentAiAudio.currentTime = 0;
+                try { recognitionRef.current.stop(); } catch (e) { }
             }
             window.speechSynthesis.cancel();
             setInterviewActive(false);
@@ -624,18 +486,6 @@ export default function MockInterview() {
                                         <div className="hud-metric">
                                             <span>SPEECH_PACE</span>
                                             <div className="hud-value">{Math.round(liveMetrics.speakingPace)} WPM</div>
-                                        </div>
-                                        <div className="hud-metric" style={{ marginTop: '15px' }}>
-                                            <span>AI_VOICE_SPEED: {speakingRate.toFixed(2)}x</span>
-                                            <input 
-                                                type="range" 
-                                                min="0.5" 
-                                                max="2.0" 
-                                                step="0.05" 
-                                                value={speakingRate} 
-                                                onChange={(e) => setSpeakingRate(parseFloat(e.target.value))} 
-                                                style={{ width: '100%', accentColor: 'var(--matrix)', cursor: 'pointer', marginTop: '5px' }} 
-                                            />
                                         </div>
                                     </div>
                                 </Motion.div>

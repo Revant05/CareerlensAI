@@ -35,7 +35,7 @@
 .chat-search input {
     background: none;
     border: none;
-    color: var(--text-main);
+    color: white;
     width: 100%;
 }
 
@@ -159,7 +159,7 @@
 .outgoing {
     align-self: flex-end;
     background: var(--primary);
-    color: var(--bg-dark);
+    color: black;
 }
 
 .msg-time {
@@ -182,7 +182,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.8rem 1rem;
     border-radius: 8px;
-    color: var(--text-main);
+    color: white;
 }
 
 .send-btn {
@@ -194,7 +194,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--bg-dark);
+    color: black;
     cursor: pointer;
 }
 

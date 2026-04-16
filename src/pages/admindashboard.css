@@ -8,16 +8,6 @@
     --admin-border: rgba(0, 242, 255, 0.2);
 }
 
-.light-theme {
-    --admin-bg: #E6EDE9;
-    --admin-card: #FFFFFF;
-    --admin-primary: #2D6A4F;
-    --admin-secondary: #C89F65;
-    --admin-accent: #E56B6F;
-    --admin-text: #1C2520;
-    --admin-border: rgba(45, 106, 79, 0.2);
-}
-
 .admin-dashboard {
     min-height: 100vh;
     background: var(--admin-bg);
@@ -40,6 +30,7 @@
     font-weight: 800;
     background: linear-gradient(90deg, var(--admin-primary), var(--admin-secondary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 2px;
 }
@@ -183,7 +174,7 @@
 
 .glow-btn:hover {
     background: var(--admin-primary);
-    color: var(--admin-bg);
+    color: #000;
     box-shadow: 0 0 20px var(--admin-primary);
 }
 
@@ -195,7 +186,7 @@
 .input-futuristic {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--admin-border);
-    color: var(--admin-text);
+    color: #fff;
     padding: 12px;
     border-radius: 8px;
     width: 100%;

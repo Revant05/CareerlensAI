@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/api';
+import { useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { Plus, Briefcase, MapPin, Users, Trash2, X } from 'lucide-react';
+import { Plus, Briefcase, MapPin, Users, Trash2, X, Video, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 import AnimatedPage from '../components/AnimatedPage';
+import toast from 'react-hot-toast';
 import './RecruiterJobs.css';
 
 export default function RecruiterJobs() {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
     const [showModal, setShowModal] = useState(false);
-
+    const [loading, setLoading] = useState(true);
+    const [startingCallFor, setStartingCallFor] = useState(null);
     const [newJob, setNewJob] = useState({
         title: '',
         description: '',
@@ -24,39 +28,83 @@ export default function RecruiterJobs() {
         try {
             const res = await api.get('/recruiter/jobs');
             setJobs(res.data);
+            setLoading(false);
         } catch (err) {
             console.error(err);
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchJobs();
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!newJob.title.trim()) return toast.error('Job title is required.');
+        if (!newJob.description.trim()) return toast.error('Job description is required.');
+        if (!newJob.requirements.trim()) return toast.error('Requirements are required.');
+
         try {
-            const reqArray = newJob.requirements.split(',').map(s => s.trim());
-            await api.post('/recruiter/jobs',
-                { ...newJob, requirements: reqArray }
-            );
+            const reqArray = newJob.requirements.split(',').map(s => s.trim()).filter(Boolean);
+            await api.post('/recruiter/jobs', { ...newJob, requirements: reqArray });
             setShowModal(false);
             setNewJob({ title: '', description: '', requirements: '', location: 'Remote', salaryRange: '' });
+            toast.success('Job vacancy published successfully!');
             fetchJobs();
         } catch (err) {
             console.error(err);
+            const msg = err.response?.data?.msg || 'Failed to create job. Please try again.';
+            toast.error(msg);
+        }
+    };
+
+    const handleStartInterview = async (job) => {
+        setStartingCallFor(job._id);
+        try {
+            const res = await api.post('/videocall/generate-room');
+            const { roomId } = res.data;
+            toast.success(`Interview room created! Share the link with your candidate.`);
+            navigate(`/video-call/${roomId}`);
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to create interview room.');
+        } finally {
+            setStartingCallFor(null);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this vacancy?')) return;
-        try {
-            await api.delete(`/recruiter/jobs/${id}`);
-            fetchJobs();
-        } catch (err) {
-            console.error(err);
-        }
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span>Delete this vacancy?</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                        style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await api.delete(`/recruiter/jobs/${id}`);
+                                toast.success('Vacancy deleted successfully.');
+                                fetchJobs();
+                            } catch (err) {
+                                const msg = err.response?.data?.msg || 'Failed to delete job.';
+                                toast.error(msg);
+                                console.error(err);
+                            }
+                        }}
+                    >
+                        Yes, Delete
+                    </button>
+                    <button
+                        style={{ background: 'transparent', border: '1px solid #555', color: '#ccc', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                        onClick={() => toast.dismiss(t.id)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 8000 });
     };
 
     return (
@@ -103,7 +151,19 @@ export default function RecruiterJobs() {
                                     <Users size={16} color="var(--primary)" />
                                     <span>{job.applicants?.length || 0} Applicants</span>
                                 </div>
-                                <button className="outline-btn-sm">Review App →</button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button className="outline-btn-sm">Review App →</button>
+                                    <button
+                                        className="start-interview-btn"
+                                        onClick={() => handleStartInterview(job)}
+                                        disabled={startingCallFor === job._id}
+                                    >
+                                        {startingCallFor === job._id
+                                            ? <Loader2 size={14} className="btn-spinner" />
+                                            : <Video size={14} />}
+                                        {startingCallFor === job._id ? 'Creating...' : 'Start Interview'}
+                                    </button>
+                                </div>
                             </div>
                         </Motion.div>
                     )) : (

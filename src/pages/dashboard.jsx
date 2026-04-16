@@ -1,45 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
-import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield, RefreshCw } from 'lucide-react';
+import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';
 import SkillChart from '../components/skillchart.jsx';
-import GlitchText from '../components/GlitchText';
-import api from '../api/api';
 import './dashboard.css';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
-  const [liveUser, setLiveUser] = useState(user);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
-  // Fetch fresh user data from DB on mount
-  useEffect(() => {
-    const fetchLiveData = async () => {
-      try {
-        const res = await api.get('/auth/me');
-        setLiveUser(res.data);
-        setUser(res.data); // update global context too
-      } catch (err) {
-        console.error(err);
-        setLiveUser(user); // fallback to context
-      } finally {
-        setDataLoaded(true);
-      }
-    };
-    fetchLiveData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
-
-  const activeUser = liveUser || user;
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const container = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
 
   const item = {
@@ -54,7 +40,24 @@ export default function Dashboard() {
 
   return (
     <AnimatedPage className="dashboard-container">
-
+      <nav className="dashboard-nav glass-panel">
+        <div className="nav-branding">
+          <img className="logo" src="logo.jpeg" alt="Logo" />
+          <div className="nav-logo">CareerLens AI</div>
+        </div>
+        <div className="nav-profile">
+          <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
+            {user?.role === 'admin' ? <Shield size={18} style={{ marginRight: '5px' }} /> : <User size={18} style={{ marginRight: '5px' }} />}
+            {user?.name || 'User'}
+          </button>
+          <button onClick={toggleTheme} className="logout-btn" title="Toggle Theme" style={{ marginRight: '10px' }}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={handleLogout} className="logout-btn" title="Logout">
+            <LogOut size={20} />
+          </button>
+        </div>
+      </nav>
 
       <div className="dashboard-wrapper container">
         <section className="hero-section">
@@ -66,10 +69,10 @@ export default function Dashboard() {
             <div className="hero-badge">AI-Powered Career Guidance</div>
             <h1 className="hero-title">
               Transform Your <br />
-              <GlitchText text="Career Journey" as="span" className="hero-glitch" />
+              <span className="hero-glitch">Career Journey</span>
             </h1>
             <p className="hero-subtitle">
-              Welcome back, <strong>{activeUser?.name?.split(' ')[0] || 'there'}</strong>. Your AI career engine is ready.
+              Get personalized roadmaps, skill assessments, and AI-driven advice to accelerate your professional growth.
             </p>
             <div className="hero-content-wrapper">
               <div className="hero-actions">
@@ -99,9 +102,7 @@ export default function Dashboard() {
             <FeatureCard
               icon={<User size={24} />}
               title="Profile Analysis"
-              desc={dataLoaded
-                ? `${activeUser?.assessments?.length || 0} assessments · ${activeUser?.completedRoadmaps?.length || 0} roadmaps done`
-                : 'Loading your data...'}
+              desc={`${user?.completedRoadmaps?.length || 0} Roadmaps Analyzed. Click for deep dive.`}
               onClick={() => navigate('/profile-analysis')}
             />
 
@@ -113,10 +114,7 @@ export default function Dashboard() {
             >
               <div className="feature-icon"><Map size={24} color="#6366f1" /></div>
               <h3>Career Roadmap</h3>
-              <p>{activeUser?.completedRoadmaps?.length > 0
-                ? `${activeUser.completedRoadmaps.length} completed · Keep going!`
-                : 'Start your first roadmap today.'}
-              </p>
+              <p>{user?.completedRoadmaps?.length > 0 ? "Continue your journey." : "Start your first roadmap today."}</p>
               <span className="card-action">View Path →</span>
             </Motion.div>
 
@@ -137,18 +135,14 @@ export default function Dashboard() {
             <FeatureCard
               icon={<Award size={24} />}
               title="Achievements"
-              desc={dataLoaded
-                ? `${activeUser?.tokens?.length || 0} career tokens earned`
-                : 'Loading achievements...'}
+              desc={`You have earned ${user?.tokens?.length || 0} career tokens.`}
               onClick={() => navigate('/profile')}
             />
 
             <FeatureCard
               icon={<Users size={24} />}
               title="Practice Interview"
-              desc={dataLoaded && activeUser?.assessments?.filter(a => a.type === 'mock_interview').length > 0
-                ? `${activeUser.assessments.filter(a => a.type === 'mock_interview').length} interviews completed`
-                : 'Real-time AI-powered practice — all 24 roles.'}
+              desc="Real-time AI-powered technical & behavioral practice."
               onClick={() => navigate('/mock-interview')}
             />
 
@@ -157,6 +151,13 @@ export default function Dashboard() {
               title="Skill Evaluation"
               desc="Assess your technical skills comprehensively."
               onClick={() => navigate('/skill-evaluation')}
+            />
+
+            <FeatureCard
+              icon={<Award size={24} color="#f59e0b" />}
+              title="Certificate Explorer"
+              desc="Discover top AI-recommended professional certifications."
+              onClick={() => navigate('/certificates')}
             />
           </Motion.div>
         </section>

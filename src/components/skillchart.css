@@ -20,20 +20,21 @@
 }
 
 .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .stat-value {
     font-size: 1.25rem;
-    font-weight: 800;
-    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
     color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
 }
 
 .stat-value.complete {
     color: var(--matrix);
+    text-shadow: 0 0 10px rgba(10, 255, 10, 0.3);
 }

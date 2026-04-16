@@ -16,6 +16,20 @@ export default function RecruiterMessages() {
     const [loading, setLoading] = useState(true);
     const [msgLoading, setMsgLoading] = useState(false);
 
+    useEffect(() => {
+        fetchChats();
+        const interval = setInterval(fetchChats, 5000); // Polling for new chats
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (selectedChat) {
+            fetchHistory(selectedChat.id);
+            const interval = setInterval(() => fetchHistory(selectedChat.id), 3000); // Faster polling for active chat
+            return () => clearInterval(interval);
+        }
+    }, [selectedChat]);
+
     const fetchChats = async () => {
         try {
             const res = await api.get('/message/chats');
@@ -34,22 +48,6 @@ export default function RecruiterMessages() {
             console.error('Error fetching history:', err);
         }
     };
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchChats();
-        const interval = setInterval(fetchChats, 5000); // Polling for new chats
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (selectedChat) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            fetchHistory(selectedChat.id);
-            const interval = setInterval(() => fetchHistory(selectedChat.id), 3000); // Faster polling for active chat
-            return () => clearInterval(interval);
-        }
-    }, [selectedChat]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();

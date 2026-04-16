@@ -4,13 +4,11 @@ import api from '../api/api';
 import GlitchText from '../components/GlitchText';
 import AnimatedPage from '../components/AnimatedPage';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { User, FileText, Target, Award, Edit2, Save, X, Zap, ShieldAlert, Phone, GraduationCap, Plus, Trash2, CheckCircle, Mail, ExternalLink } from 'lucide-react';
+import { User, FileText, Target, Award, Edit2, Save, X, Zap, ShieldAlert, Phone, GraduationCap, Plus, Trash2, CheckCircle, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './profile.css';
 
 export default function Profile() {
-    const navigate = useNavigate();
     const { user, setUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [tokens, setTokens] = useState([]); // Restored state
@@ -21,7 +19,7 @@ export default function Profile() {
 
     const [formData, setFormData] = useState({
         headline: '',
-        aspirations: '', // Changed to handle string input for tags
+        aspiration: '',
         phone: '',
         resume: '',
         strengths: '',
@@ -32,19 +30,24 @@ export default function Profile() {
         certifications: []
     });
 
+    useEffect(() => {
+        fetchProfile();
+        fetchTokens(); // Restored call
+    }, []);
+
     const fetchProfile = async () => {
         try {
             const res = await api.get('/auth/me');
             setProfile(res.data);
             setFormData({
                 headline: res.data.headline || '',
-                aspirations: res.data.aspirations?.length ? res.data.aspirations.join(', ') : (res.data.aspiration || ''),
+                aspiration: res.data.aspiration || '',
                 phone: res.data.phone || '',
                 resume: res.data.resume || '',
-                strengths: res.data.swot?.strengths.join(', ') || '',
-                weaknesses: res.data.swot?.weaknesses.join(', ') || '',
-                opportunities: res.data.swot?.opportunities.join(', ') || '',
-                threats: res.data.swot?.threats.join(', ') || '',
+                strengths: res.data.swot?.strengths?.join(', ') || '',
+                weaknesses: res.data.swot?.weaknesses?.join(', ') || '',
+                opportunities: res.data.swot?.opportunities?.join(', ') || '',
+                threats: res.data.swot?.threats?.join(', ') || '',
                 education: res.data.education || [],
                 certifications: res.data.certifications || []
             });
@@ -62,12 +65,6 @@ export default function Profile() {
         }
     };
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchProfile();
-        fetchTokens(); // Restored call
-    }, []);
-
     const handleSave = async () => {
         try {
             const swot = {
@@ -79,7 +76,7 @@ export default function Profile() {
 
             const payload = {
                 headline: formData.headline,
-                aspirations: formData.aspirations.split(',').map(s => s.trim()).filter(Boolean),
+                aspiration: formData.aspiration,
                 phone: formData.phone,
                 resume: formData.resume,
                 swot,
@@ -93,11 +90,7 @@ export default function Profile() {
             setIsEditing(false);
             toast.success('Profile Synced Successfully!');
         } catch (err) {
-            if (err.response && err.response.data && err.response.data.msg) {
-                toast.error(err.response.data.msg); // Show AI validation error from backend
-            } else {
-                toast.error('Failed to sync profile');
-            }
+            toast.error('Failed to sync profile');
         }
     };
 
@@ -109,7 +102,6 @@ export default function Profile() {
             setShowOtpModal(true);
             toast.success('Check console for mock OTP!');
         } catch (err) {
-            console.error(err);
             toast.error('Failed to send OTP');
         }
     };
@@ -123,7 +115,6 @@ export default function Profile() {
             setOtpCode('');
             toast.success('Identity Verified!');
         } catch (err) {
-            console.error(err);
             toast.error('Invalid OTP');
         }
     };
@@ -166,15 +157,15 @@ export default function Profile() {
         setFormData({ ...formData, certifications: list });
     };
 
-    if (!profile) return <div className="loader-container">Initialising Recruiter Dashboard...</div>;
+    if (!profile) return <div className="loader-container">Initialising Your Profile...</div>;
 
     // Calculate Progress
     const progressItems = [
         profile.headline,
-        (profile.aspirations && profile.aspirations.length > 0) || profile.aspiration,
+        profile.aspiration,
         profile.isVerifiedPhone,
-        profile.education.length > 0,
-        profile.swot?.strengths.length > 0
+        profile.education?.length > 0,
+        profile.swot?.strengths?.length > 0
     ];
     const progressPercent = Math.round((progressItems.filter(Boolean).length / progressItems.length) * 100);
 
@@ -216,19 +207,15 @@ export default function Profile() {
                                 />
                                 <input
                                     className="edit-input"
-                                    value={formData.aspirations}
-                                    onChange={e => setFormData({ ...formData, aspirations: e.target.value })}
-                                    placeholder="Career Aspirations (comma separated, e.g. Data Scientist, AI Engineer)"
+                                    value={formData.aspiration}
+                                    onChange={e => setFormData({ ...formData, aspiration: e.target.value })}
+                                    placeholder="Career Aspiration (e.g. Senior Lead)"
                                 />
                             </div>
                         ) : (
                             <>
                                 <p className="profile-headline">{profile.headline}</p>
-                                {((profile.aspirations && profile.aspirations.length > 0) || profile.aspiration) && (
-                                    <p className="profile-aspiration">
-                                        <Zap size={14} fill="var(--secondary)" stroke="none" /> Goal: {profile.aspirations?.length ? profile.aspirations.join(' • ') : profile.aspiration}
-                                    </p>
-                                )}
+                                {profile.aspiration && <p className="profile-aspiration"><Zap size={14} fill="var(--secondary)" stroke="none" /> Goal: {profile.aspiration}</p>}
                             </>
                         )}
                     </div>
@@ -358,13 +345,40 @@ export default function Profile() {
                 </div>
 
                 {/* Assessment History */}
-                <div className="profile-section glass-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem', textAlign: 'center' }}>
-                    <FileText size={48} color="var(--primary)" style={{ marginBottom: '1rem' }} />
-                    <h3 style={{ margin: 0 }}>Detailed Assessment Reports</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '400px' }}>Your AI interview and technical skill evaluation reports have been moved to a dedicated dashboard for deep analysis.</p>
-                    <button className="neon-btn" onClick={() => navigate('/assessment-history')}>
-                        <ExternalLink size={16} style={{ marginRight: '8px' }} /> View Assessment History
-                    </button>
+                <div className="profile-section glass-panel">
+                    <h3><FileText size={20} /> Assessment Report History</h3>
+                    <div className="assessment-history">
+                        {profile.assessments?.length === 0 ? (
+                            <p className="placeholder-text">Complete an interview or evaluation to see reports.</p>
+                        ) : (
+                            <div className="reports-list">
+                                {profile.assessments.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)).map((asmt, idx) => (
+                                    <div key={idx} className="report-item glass-panel">
+                                        <div className="report-main">
+                                            <div className="report-header">
+                                                <span className="report-type">{asmt.type === 'mock_interview' ? 'INTERVIEW' : 'SKILL_EVAL'}</span>
+                                                <span className="report-date">{new Date(asmt.completedAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <h4>{asmt.category.toUpperCase()} Session</h4>
+                                            <div className="report-scores">
+                                                <div className="mini-score">
+                                                    <span>TECH_DEPTH</span>
+                                                    <strong>{asmt.aiInsights?.technicalScore || asmt.score}%</strong>
+                                                </div>
+                                                <div className="mini-score">
+                                                    <span>CONFIDENCE</span>
+                                                    <strong>{asmt.metrics?.confidence || 'N/A'}%</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="report-feedback">
+                                            <p>{asmt.aiInsights?.emotionalFeedback || 'No detailed feedback available for this session.'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Achievements */}

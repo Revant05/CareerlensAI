@@ -86,7 +86,7 @@
 
 .token-card h4 {
     margin: 1rem 0 0.5rem 0;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 1rem;
     letter-spacing: 1.5px;
     color: var(--text-main);
@@ -95,7 +95,7 @@
 
 .token-date {
     font-size: 0.75rem;
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
     color: var(--text-muted);
     opacity: 0.6;
 }
@@ -427,7 +427,7 @@
 .report-header {
     display: flex;
     justify-content: space-between;
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
     font-size: 0.7rem;
     margin-bottom: 0.5rem;
 }
@@ -442,7 +442,7 @@
 }
 
 .report-item h4 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     margin: 0.5rem 0 1rem 0;
     color: var(--text-main);
     font-size: 1rem;
@@ -463,13 +463,13 @@
 .mini-score span {
     font-size: 0.65rem;
     color: var(--text-muted);
-    font-family: 'Inter', monospace;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .mini-score strong {
     color: var(--primary);
     font-size: 1.2rem;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .report-feedback {

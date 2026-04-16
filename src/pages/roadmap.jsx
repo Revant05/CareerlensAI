@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, CheckCircle, BookOpen, Star, Layout, Code, Server, Shield, Database, Terminal, Cpu, Globe, ArrowLeft, Award, Target, Cpu as CpuIcon, ShieldCheck, Zap, RefreshCw, Briefcase } from 'lucide-react';
+import { ChevronRight, CheckCircle, BookOpen, Star, Layout, Code, Server, Shield, Database, Terminal, Cpu, Globe, ArrowLeft, Award, Target } from 'lucide-react';
 import api from '../api/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,6 @@ import './roadmap.css';
 // 1. THE COMPLETE DATA (ALL DOMAINS)
 // ==========================================
 
-// eslint-disable-next-line no-unused-vars
 const roleRoadmaps = [
   { id: 'frontend', title: 'Frontend', desc: 'User Interface & UX', isNew: false },
   { id: 'backend', title: 'Backend', desc: 'Server Logic & DBs', isNew: false },
@@ -40,7 +39,6 @@ const roleRoadmaps = [
   { id: 'bi-analyst', title: 'BI Analyst', desc: 'Business Intelligence', isNew: true },
 ];
 
-// eslint-disable-next-line no-unused-vars
 const skillRoadmaps = [
   { id: 'computer-science', title: 'Computer Science', isNew: false },
   { id: 'sql', title: 'SQL', isNew: true },
@@ -79,7 +77,6 @@ const skillRoadmaps = [
   { id: 'wordpress', title: 'WordPress', isNew: true },
 ];
 
-// eslint-disable-next-line no-unused-vars
 const bestPractices = [
   { id: 'aws-best', title: 'AWS Best Practices', desc: 'Security & Cost' },
   { id: 'api-security', title: 'API Security', desc: 'Safe API Design' },
@@ -278,7 +275,6 @@ const specificRoadmapDetails = {
 // ==========================================
 // 3. GENERATOR FUNCTION
 // ==========================================
-// eslint-disable-next-line no-unused-vars
 const getRoadmapData = (id, title) => {
   if (specificRoadmapDetails[id]) return specificRoadmapDetails[id];
   return {
@@ -318,9 +314,8 @@ const RoadmapCard = ({ id, title, desc, isFresh, type }) => {
     <Link to={`/roadmap/${id}`}>
       <Motion.div
         className={`roadmap-card glass-panel ${type}`}
-        whileHover={{ scale: 1.04, y: -5 }}
+        whileHover={{ scale: 1.05, translateY: -5, borderColor: 'var(--primary)' }}
         whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.1, ease: 'easeOut' }}
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -341,46 +336,10 @@ export const RoadmapList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roadmaps, setRoadmaps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [aiRoadmap, setAiRoadmap] = useState(null);
-  const [loadingAi, setLoadingAi] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     fetchRoadmaps();
-    if (user && user.role === 'student') {
-        fetchAiRoadmap();
-    }
-  }, [user]);
-
-  const fetchAiRoadmap = async () => {
-      setLoadingAi(true);
-      try {
-          const res = await api.get('/roadmap/personalized');
-          if (res.data && res.data.roadmap) {
-              setAiRoadmap(res.data.roadmap);
-          }
-      } catch (err) {
-          console.error("Failed to fetch AI roadmap", err);
-      } finally {
-          setLoadingAi(false);
-      }
-  };
-
-  const generateNewAiRoadmap = async () => {
-      setLoadingAi(true);
-      try {
-          const res = await api.get('/roadmap/personalized?refresh=true');
-          if (res.data && res.data.roadmap) {
-              setAiRoadmap(res.data.roadmap);
-              toast.success('Successfully generated new AI Roadmap!');
-          }
-      } catch (err) {
-          console.error(err);
-          toast.error('Failed to update AI roadmap.');
-      } finally {
-          setLoadingAi(false);
-      }
-  };
+  }, []);
 
   const fetchRoadmaps = async () => {
     try {
@@ -427,98 +386,6 @@ export const RoadmapList = () => {
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading Library...</div>
       ) : (
         <div className="content-container">
-
-          {/* AI Personalized Roadmap */}
-          {user && user.role === 'student' && (
-            <section className="group-section ai-roadmap-section" style={{ marginBottom: '3rem' }}>
-                <SectionHeader icon={Star} title="Your Personalized AI Roadmap" subtitle="Dynamically synthesized based on your career aspirations and current market demands." />
-                
-                {loadingAi ? (
-                    <div style={{ textAlign: 'center', padding: '3rem' }}><GlitchText text="Synthesizing Market Trends..." /></div>
-                ) : aiRoadmap ? (
-                    <Motion.div 
-                        className="ai-roadmap-content glass-panel"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        style={{ padding: '2rem', border: '1px solid rgba(0, 243, 255, 0.2)', position: 'relative', overflow: 'hidden' }}
-                    >
-                        <div style={{ position: 'absolute', top: '-50px', right: '-50px', background: 'radial-gradient(circle, rgba(0,243,255,0.1) 0%, transparent 70%)', width: '200px', height: '200px', borderRadius: '50%' }}></div>
-                        
-                        <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', borderLeft: '4px solid var(--matrix)' }}>
-                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>
-                                <Globe size={18} color="var(--matrix)" /> Market Context
-                            </h4>
-                            <p style={{ color: 'var(--text-dim)', lineHeight: '1.6', margin: 0 }}>
-                                {aiRoadmap.market_trend_summary || aiRoadmap.marketTrendSummary}
-                            </p>
-                        </div>
-
-                        <div className="ai-lists" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                            <Motion.div whileHover={{ scale: 1.02 }} className="ai-list-card glass-panel" style={{ flex: 1, minWidth: '300px', padding: '1.5rem', borderTop: '4px solid var(--matrix)', background: 'rgba(0,0,0,0.3)' }}>
-                                <h4 style={{ color: 'var(--matrix)', display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem', fontSize: '1.2rem' }}>
-                                    <CpuIcon size={22} /> Required Skills
-                                </h4>
-                                <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                    {aiRoadmap.skills?.length > 0 ? (
-                                        aiRoadmap.skills.map((s, i) => (
-                                            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'var(--text-dim)' }}>
-                                                <Zap size={16} color="var(--matrix)" style={{ marginTop: '3px', flexShrink: 0 }} />
-                                                <span>{s}</span>
-                                            </li>
-                                        ))
-                                    ) : <li style={{ color: 'var(--text-dim)' }}>No skills generated.</li>}
-                                </ul>
-                            </Motion.div>
-
-                            <Motion.div whileHover={{ scale: 1.02 }} className="ai-list-card glass-panel" style={{ flex: 1, minWidth: '300px', padding: '1.5rem', borderTop: '4px solid var(--primary)', background: 'rgba(0,0,0,0.3)' }}>
-                                <h4 style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem', fontSize: '1.2rem' }}>
-                                    <ShieldCheck size={22} /> Certifications
-                                </h4>
-                                <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                    {aiRoadmap.certifications?.length > 0 ? (
-                                        aiRoadmap.certifications.map((c, i) => (
-                                            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'var(--text-dim)' }}>
-                                                <Award size={16} color="var(--primary)" style={{ marginTop: '3px', flexShrink: 0 }} />
-                                                <span>{c}</span>
-                                            </li>
-                                        ))
-                                    ) : <li style={{ color: 'var(--text-dim)' }}>No certifications suggested.</li>}
-                                </ul>
-                            </Motion.div>
-
-                            <Motion.div whileHover={{ scale: 1.02 }} className="ai-list-card glass-panel" style={{ flex: 1, minWidth: '300px', padding: '1.5rem', borderTop: '4px solid var(--accent)', background: 'rgba(0,0,0,0.3)' }}>
-                                <h4 style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem', fontSize: '1.2rem' }}>
-                                    <Briefcase size={22} /> Portfolio Projects
-                                </h4>
-                                <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                    {aiRoadmap.projects?.length > 0 ? (
-                                        aiRoadmap.projects.map((p, i) => (
-                                            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'var(--text-dim)' }}>
-                                                <Terminal size={16} color="var(--accent)" style={{ marginTop: '3px', flexShrink: 0 }} />
-                                                <span>{p}</span>
-                                            </li>
-                                        ))
-                                    ) : <li style={{ color: 'var(--text-dim)' }}>No projects suggested.</li>}
-                                </ul>
-                            </Motion.div>
-                        </div>
-                        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button className="neon-btn small outline" onClick={generateNewAiRoadmap} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <RefreshCw size={14} /> Regenerate Roadmap
-                            </button>
-                        </div>
-                    </Motion.div>
-                ) : (
-                    <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem', border: '1px dashed rgba(255,255,255,0.2)' }}>
-                        <Star size={48} color="rgba(255,255,255,0.1)" style={{ marginBottom: '1rem' }} />
-                        <p style={{ color: 'var(--text-dim)', marginBottom: '1.5rem' }}>You haven't generated a personalized roadmap yet, or your career aspirations match none.</p>
-                        <button className="neon-btn outline" onClick={generateNewAiRoadmap}>Build My AI Roadmap</button>
-                    </div>
-                )}
-            </section>
-          )}
-
           {/* Role Based */}
           {(filterList(roleRoadmaps).length > 0) && (
             <section className="group-section">
@@ -574,8 +441,7 @@ export const RoadmapDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchRoadmapData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id]);
 
   const fetchRoadmapData = async () => {
     if (!user) return;
@@ -612,7 +478,6 @@ export const RoadmapDetail = () => {
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
   const refreshUser = async () => {
     try {
       const res = await api.get('/auth/me');
@@ -737,7 +602,7 @@ export const RoadmapDetail = () => {
               </h3>
               <ul className="step-list">
                 {step.sub.map((s, i) => {
-                  const isChecked = progress?.completedNodes?.includes(s) || false;
+                  const isChecked = progress.completedNodes?.includes(s);
                   return (
                     <li key={i} className={`step-item ${isChecked ? 'checked' : ''}`} onClick={() => toggleNode(s)}>
                       <div className={`checkbox ${isChecked ? 'active' : ''}`}>

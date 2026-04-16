@@ -19,9 +19,13 @@ export default function Signup() {
         e.preventDefault();
         const success = await signup(name, email, password, role);
         if (success) {
-            navigate('/login');
+            // Auto redirect based on role (token is already set by signup)
+            if (role === 'recruiter') {
+                navigate('/recruiter-dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } else {
-            // Refresh state by clearing ALL fields on failure
             setName('');
             setEmail('');
             setPassword('');

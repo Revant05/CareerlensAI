@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion as Motion } from 'framer-motion';
-import { Briefcase, MapPin, DollarSign, Clock, ArrowLeft, Search, Building2, ExternalLink } from 'lucide-react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { Briefcase, MapPin, DollarSign, Clock, ArrowLeft, Search, Building2, Video, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 import api from '../api/api';
+import toast from 'react-hot-toast';
 import './StudentJobs.css';
 
 export default function StudentJobs() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [joinLink, setJoinLink] = useState('');
+
+    useEffect(() => {
+        fetchJobs();
+    }, []);
 
     const fetchJobs = async () => {
         try {
@@ -23,24 +32,34 @@ export default function StudentJobs() {
         }
     };
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchJobs();
-    }, []);
-
     const filteredJobs = jobs.filter(job =>
         job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.companyName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleJoinInterview = () => {
+        // Accept either full URL or just the roomId
+        let roomId = joinLink.trim();
+        // Extract roomId from a full URL like http://localhost:5173/video-call/UUID
+        const match = roomId.match(/video-call\/([a-f0-9-]{36})/);
+        if (match) roomId = match[1];
+        if (!roomId || roomId.length < 10) {
+            toast.error('Please paste a valid interview link.');
+            return;
+        }
+        setShowJoinModal(false);
+        navigate(`/video-call/${roomId}`);
+    };
+
     return (
+        <>
         <AnimatedPage className="student-jobs-page">
             <nav className="dashboard-nav glass-panel">
                 <button onClick={() => navigate('/dashboard')} className="back-btn">
                     <ArrowLeft size={20} />
                     <span>Back to Dashboard</span>
                 </button>
-                <div className="nav-profile">
+                <div className="nav-profile" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Search size={18} className="search-icon" />
                     <input
                         type="text"
@@ -110,6 +129,13 @@ export default function StudentJobs() {
                                     <button className="msg-btn outline-btn" onClick={() => navigate('/messages', { state: { recipient: { id: job.recruiterId, name: job.companyName, role: 'recruiter' } } })}>
                                         Ask Recruiter
                                     </button>
+                                    <button
+                                        className="join-interview-card-btn"
+                                        onClick={() => { setJoinLink(''); setShowJoinModal(job._id); }}
+                                    >
+                                        <Video size={14} />
+                                        Join Interview
+                                    </button>
                                 </div>
                             </Motion.div>
                         ))}
@@ -123,5 +149,48 @@ export default function StudentJobs() {
                 )}
             </div>
         </AnimatedPage>
+
+        {/* Join Interview Modal — opens per job card */}
+        <AnimatePresence>
+            {showJoinModal && (
+                <Motion.div
+                    className="join-modal-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowJoinModal(false)}
+                >
+                    <Motion.div
+                        className="join-modal glass-panel"
+                        initial={{ scale: 0.85, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.85, opacity: 0, y: 20 }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button className="join-modal-close" onClick={() => setShowJoinModal(false)}><X size={20} /></button>
+                        <div className="join-modal-icon">
+                            <Video size={36} color="#00f3ff" />
+                        </div>
+                        <h3 className="join-modal-title">Join Interview Call</h3>
+                        <p className="join-modal-sub">
+                            Recruiter ne jo link share kiya hai woh yahan paste karein.
+                        </p>
+                        <input
+                            className="join-modal-input"
+                            type="text"
+                            placeholder="Interview link ya Room ID paste karein..."
+                            value={joinLink}
+                            onChange={e => setJoinLink(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleJoinInterview()}
+                            autoFocus
+                        />
+                        <button className="neon-btn join-modal-btn" onClick={handleJoinInterview}>
+                            <Video size={18} /> Join Now
+                        </button>
+                    </Motion.div>
+                </Motion.div>
+            )}
+        </AnimatePresence>
+        </>
     );
 }

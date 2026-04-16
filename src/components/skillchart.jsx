@@ -9,8 +9,7 @@ const data = [
   { name: 'UI/UX Design', value: 15 },
 ];
 
-// Refined organic/sage and earth tone palette for sophisticated UI matching
-const COLORS = ['#2D6A4F', '#40916C', '#52B788', '#C89F65', '#E56B6F'];
+const COLORS = ['#3b82f6', '#2563eb', '#1d4ed8', '#60a5fa', '#93c5fd'];
 
 import './skillchart.css';
 
@@ -33,13 +32,12 @@ const SkillChart = () => {
           <Tooltip
             formatter={(value) => `${value}%`}
             contentStyle={{
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--glass-border)',
+              backgroundColor: '#1e293b',
+              border: '1px solid #3b82f6',
               borderRadius: '8px',
-              color: 'var(--text-main)',
-              backdropFilter: 'blur(10px)'
+              color: '#fff'
             }}
-            itemStyle={{ color: 'var(--primary)' }}
+            itemStyle={{ color: '#fff' }}
           />
         </PieChart>
       </ResponsiveContainer>

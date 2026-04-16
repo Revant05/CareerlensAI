@@ -46,19 +46,7 @@
     height: 100%;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-    border: 1px solid transparent;
-}
-
-.roadmap-card:hover {
-    border-color: var(--primary);
-    box-shadow: 0 0 20px var(--primary-glow);
-}
-
-.light-theme .roadmap-card:hover {
-    border-color: var(--primary);
-    background: rgba(45, 106, 79, 0.1); /* Sage green tint on hover in light mode */
-    box-shadow: 0 8px 30px rgba(45, 106, 79, 0.2);
+    transition: border-color 0.3s;
 }
 
 .roadmap-card h3 {
@@ -87,7 +75,7 @@
     top: 10px;
     right: 10px;
     background: var(--accent);
-    color: var(--bg-dark);
+    color: white;
     font-size: 0.65rem;
     padding: 2px 6px;
     border-radius: 4px;
@@ -137,8 +125,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: var(--text-main);
-    font-weight: 600;
 }
 
 .progress-bar-bg {
@@ -182,7 +168,7 @@
 }
 
 .completion-glitch-text {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: 3px;
@@ -265,7 +251,7 @@
 }
 
 .step-card h3 {
-    color: var(--primary);
+    color: var(--secondary);
     margin-bottom: 0.5rem;
 }
 

@@ -8,30 +8,6 @@ const Recruiter = require('../models/Recruiter');
 const Admin = require('../models/Admin');
 const Token = require('../models/Token');
 const RoadmapProgress = require('../models/RoadmapProgress');
-const axios = require('axios');
-
-// AI Engine configuration
-const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://127.0.0.1:8001';
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET || 'careerlens_default_67890';
-
-// Helper to validate text with AI
-const validateProfileText = async (text, fieldName) => {
-    if (!text) return { isValid: true };
-    try {
-        const response = await axios.post(`${AI_ENGINE_URL}/validate-profile`, {
-            text,
-            field_name: fieldName
-        }, {
-            headers: {
-                'x-internal-secret': INTERNAL_SECRET
-            }
-        });
-        return { isValid: response.data.is_valid, reason: response.data.reason };
-    } catch (err) {
-        console.error(`AI Validation error for ${fieldName}:`, err.message);
-        return { isValid: true }; // Bypass if AI is down
-    }
-};
 
 // Helper to find user in all collections
 const findUserByEmail = async (email) => {
@@ -153,10 +129,10 @@ router.get('/me', auth, async (req, res) => {
         const user = req.user; // Set by auth middleware
         if (!user) return res.status(404).json({ msg: 'User not found' });
 
-        const userObj = user.toObject();
+        const userObj = { ...user };
         if (user.role === 'student') {
-            const allProgress = await RoadmapProgress.find({ userId: req.user.id });
-            const tokens = await Token.find({ userId: req.user.id }).sort({ issuedAt: -1 });
+            const allProgress = await RoadmapProgress.find({ userId: user.id });
+            const tokens = await Token.find({ userId: user.id }).sort({ issuedAt: -1 });
             userObj.roadmapProgress = allProgress;
             userObj.completedRoadmaps = allProgress.filter(p => p.isFinished);
             userObj.tokens = tokens;
@@ -179,32 +155,14 @@ router.put('/profile', auth, async (req, res) => {
         if (!user) return res.status(404).json({ msg: 'User not found' });
 
         if (user.role === 'student') {
-            const { headline, aspiration, aspirations, phone, resume, swot, skills, education, certifications } = req.body;
-            
-            // Validate Headling and Aspirations
-            if (headline) {
-                const validation = await validateProfileText(headline, 'headline');
-                if (!validation.isValid) return res.status(400).json({ msg: `AI Validation: Headline is invalid. ${validation.reason}` });
+            const { headline, aspiration, phone, resume, swot, skills, education, certifications } = req.body;
+            if (headline) user.headline = headline;
+            if (aspiration) user.aspiration = aspiration;
+            if (phone && phone !== user.phone) {
+                user.phone = phone;
+                user.isVerifiedPhone = false;
             }
-            
-            let finalAspirations = [];
-            if (Array.isArray(aspirations) && aspirations.length > 0) {
-                finalAspirations = aspirations;
-            } else if (aspiration) {
-                finalAspirations = [aspiration];
-            }
-            
-            if (finalAspirations.length > 0) {
-                const validation = await validateProfileText(finalAspirations.join(', '), 'aspirations');
-                if (!validation.isValid) return res.status(400).json({ msg: `AI Validation: Aspirations are invalid. ${validation.reason}` });
-            }
-
-            if (headline !== undefined) user.headline = headline;
-            if (aspiration !== undefined) user.aspiration = aspiration;
-            // Multi-aspiration tags
-            if (finalAspirations.length > 0) user.aspirations = finalAspirations;
-            if (phone !== undefined) user.phone = phone;
-            if (resume !== undefined) user.resume = resume;
+            if (resume) user.resume = resume;
             if (swot) user.swot = swot;
             if (skills) user.skills = skills;
             if (education) user.education = education;
@@ -212,13 +170,15 @@ router.put('/profile', auth, async (req, res) => {
 
             const isEduComplete = user.education && user.education.length > 0;
             const isSwotComplete = user.swot && user.swot.strengths.length > 0 && user.swot.weaknesses.length > 0;
-            const hasAspiration = (user.aspirations && user.aspirations.length > 0) || !!user.aspiration;
-            user.isProfileComplete = !!(user.headline && hasAspiration && isEduComplete && isSwotComplete);
+            user.isProfileComplete = !!(user.headline && user.aspiration && isEduComplete && isSwotComplete);
         } else if (user.role === 'recruiter') {
             const { companyName, companyWebsite, phone } = req.body;
             if (companyName) user.companyName = companyName;
             if (companyWebsite) user.companyWebsite = companyWebsite;
-            if (phone) user.phone = phone;
+            if (phone && phone !== user.phone) {
+                user.phone = phone;
+                user.isVerifiedPhone = false;
+            }
         }
 
         await user.save();
@@ -242,22 +202,66 @@ router.put('/profile', auth, async (req, res) => {
 
 // @route   POST api/auth/request-otp
 router.post('/request-otp', auth, async (req, res) => {
-    const { phone } = req.body;
+    let { phone } = req.body;
     if (!phone) return res.status(400).json({ msg: 'Phone number is required' });
+
+    // Auto-format phone for Twilio (E.164 standard)
+    if (!phone.startsWith('+')) {
+        // Defaulting to India code logic if country picker isn't present
+        phone = `+91${phone.replace(/^0+/, '')}`;
+    }
+
+    // Validate phone number roughly for E.164
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ msg: 'Invalid phone number format' });
+    }
 
     try {
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiry = Date.now() + 10 * 60 * 1000;
+        const expiry = Date.now() + 2 * 60 * 1000; // 2 minutes expiry securely
 
         let user = await findUserById(req.user.id);
+        
+        // Rate limiting logic simplified (optional based on DB)
         user.otp = { code: otpCode, expiry, target: phone };
         await user.save();
 
-        console.log(`[OTP] Generated OTP for ${phone}: ${otpCode}`);
-        res.json({ msg: 'OTP sent to your phone (MOCKED in console)', phone });
+        if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+            const twilio = require('twilio');
+            const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            
+            try {
+                await client.messages.create({
+                    body: `Your OTP is ${otpCode}`,
+                    from: process.env.TWILIO_PHONE_NUMBER,
+                    to: phone
+                });
+                
+                res.json({ msg: 'OTP sent successfully via SMS to your mobile!', phone });
+            } catch (err) {
+                console.error('Twilio SMS Error:', err.message);
+                
+                if (err.message.includes('unverified')) {
+                    console.log(`\n========================================`);
+                    console.log(`[DEVELOPER MOCK OTP] Twilio blocked SMS (Unverified Number).`);
+                    console.log(`Generated OTP for ${phone}: ${otpCode}`);
+                    console.log(`========================================\n`);
+                    return res.status(200).json({ 
+                        msg: 'Unverified Number! MOCK OTP sent to server terminal for testing.', 
+                        phone 
+                    });
+                }
+                
+                return res.status(500).json({ msg: `Twilio Error: ${err.message}` });
+            }
+        } else {
+            console.error('Twilio credentials missing in server/.env');
+            return res.status(500).json({ msg: 'Twilio configuration missing' });
+        }
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+        console.error('Internal Server Error:', err.message);
+        res.status(500).json({ msg: 'Failed to process request' });
     }
 });
 

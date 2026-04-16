@@ -3,17 +3,18 @@ from typing import List, Optional, Dict, Any
 
 class UserProfile(BaseModel):
     user_id: str
-    skills: Optional[List[str]] = []
-    aspiration: Optional[str] = ""
+    domain: str  # e.g., "Cybersecurity", "Nursing", "Java Dev"
+    goal: str
+    motivation: str
 
-class TranscriptMessage(BaseModel):
-    role: str
+class ChatMessage(BaseModel):
+    role: str # "user" or "assistant"
     content: str
 
 class InterviewPayload(BaseModel):
-    user_id: Optional[str] = ""
+    user_id: str
     domain: str
-    transcript: List[TranscriptMessage]
+    transcript: List[ChatMessage]
 
 class AnalysisResponse(BaseModel):
     technical_score: int
@@ -22,31 +23,4 @@ class AnalysisResponse(BaseModel):
     weaknesses: List[str]
     emotional_feedback: str
     next_roadmap_step: str
-    metrics: Optional[Dict[str, Any]] = {}
-
-class LiveAnalysisRequest(BaseModel):
-    domain: str
-    transcript: List[TranscriptMessage]
-
-class LiveAnalysisResponse(BaseModel):
-    running_score: int
-    sentiment: str
-    topics_detected: List[str]
-    pace_feedback: str
-
-class ValidationRequest(BaseModel):
-    text: str
-    field_name: str
-
-class ValidationResponse(BaseModel):
-    is_valid: bool
-    reason: str
-
-class RoadmapRequest(BaseModel):
-    aspirations: List[str]
-
-class RoadmapResponse(BaseModel):
-    skills: List[str]
-    certifications: List[str]
-    projects: List[str]
-    market_trend_summary: str
+    metrics: Dict[str, Any]

@@ -1,48 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
 
 :root {
   /* DARK AESTHETIC PALETTE (Premium Stripe/Linear Vibe) */
-  --bg-dark: #05050A; /* Deep Obsidian Void */
-  --bg-card: #0E0E14; /* Midnight Elevation */
+  --bg-dark: #05050A;
+  --bg-card: #0E0E14;
 
-  /* Modern Subtle Neons (Gradient Maps) */
-  --primary: #4FACFE; /* Soft blue glow */
+  /* Modern Subtle Neons */
+  --primary: #4FACFE;
   --primary-glow: rgba(79, 172, 254, 0.4);
-  --secondary: #00F2FE; /* Vivid cyan */
+  --secondary: #00F2FE;
   --secondary-glow: rgba(0, 242, 254, 0.4);
-  --accent: #FF0844; /* Vivid cherry */
-  --matrix: #0ED2F7; /* Replaced hacker green with cool high-tech cyan */
+  --accent: #FF0844;
+  --matrix: #0ED2F7;
 
   --text-main: #FFFFFF;
-  --text-muted: #8A8D98; /* High-end muted gray */
+  --text-muted: #8A8D98;
 
   --glass-bg: rgba(18, 18, 25, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.08); /* Frosted premium edge */
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-highlight: rgba(255, 255, 255, 0.04);
   
-  /* Remove harsh grids, use soft aura - VIBRANT OPACITY FOR MAX AESTHETIC */
-  --aura-color-1: rgba(160, 64, 255, 0.25); /* Deep Purple Glow */
-  --aura-color-2: rgba(0, 242, 254, 0.25); /* Deep Cyan Glow */
+  --aura-color-1: rgba(160, 64, 255, 0.25);
+  --aura-color-2: rgba(0, 242, 254, 0.25);
   --bg-image: none;
+
+  --grid-line: rgba(79, 172, 254, 0.03);
+  --scanline: rgba(79, 172, 254, 0.3);
 }
 
 .light-theme {
-  /* SAGE & EARTH ELEGANT LIGHT THEME */
-  --bg-dark: #E6EDE9; /* Sage Fallback */
+  --bg-dark: #E6EDE9;
   --bg-card: #FFFFFF;
 
-  --primary: #2D6A4F; /* Deep sophisticated forest green */
+  --primary: #2D6A4F;
   --primary-glow: rgba(45, 106, 79, 0.2);
-  --secondary: #C89F65; /* Warm elegant sand/gold */
+  --secondary: #C89F65;
   --secondary-glow: rgba(200, 159, 101, 0.2);
-  --accent: #E56B6F; /* Soft organic coral */
-  --matrix: #40916C; /* Medium sage green */
+  --accent: #E56B6F;
+  --matrix: #40916C;
 
-  --text-main: #1C2520; /* Extremely dark sage-slate for perfect readability */
-  --text-muted: #4A5D53; /* Deep gray-green for muted elements, super legible */
+  --text-main: #1C2520;
+  --text-muted: #4A5D53;
 
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(45, 106, 79, 0.08); /* Subtle green border */
+  --glass-border: rgba(45, 106, 79, 0.08);
   --glass-highlight: rgba(255, 255, 255, 0.9);
   
   --aura-color-1: transparent;
@@ -50,7 +51,6 @@
   --bg-image: url('./assets/sage-studio-bg.png');
 }
 
-/* Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -69,7 +69,7 @@ html {
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: transparent !important; /* CRITICAL: Must be transparent to let auras show through */
+  background-color: transparent !important;
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
@@ -78,7 +78,6 @@ body {
   min-height: 100vh;
 }
 
-/* AURA BACKGROUND EFFECTS */
 body::before, body::after {
   content: "";
   position: fixed;
@@ -111,7 +110,7 @@ body::after {
 
 #root {
   position: relative;
-  z-index: 1; /* Ensures React content stays above the z-index: -1 auras */
+  z-index: 1;
 }
 
 @keyframes floatAura {
@@ -119,7 +118,6 @@ body::after {
   100% { transform: translate(100px, 50px) scale(1.1); }
 }
 
-/* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
@@ -133,7 +131,6 @@ a {
   transition: all 0.2s ease;
 }
 
-/* Utilities */
 .container {
   max-width: 1280px;
   margin: 0 auto;
@@ -145,24 +142,22 @@ a {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  /* Stylish subtle glow */
   filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
 }
 
-/* PREMIUM Modern Glass Panels */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); /* Deep shadow, no cheap neon */
-  border-radius: 16px; /* Smooth rounded aesthetic */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
 }
 
 .light-theme .glass-panel {
   box-shadow: 0 12px 36px rgba(45, 106, 79, 0.1);
-  background: rgba(207, 224, 214, 0.75); /* Soft sage-tinted glass — matches hover tab shade */
+  background: rgba(207, 224, 214, 0.75);
   border: 1px solid rgba(45, 106, 79, 0.12);
 }
 
@@ -171,14 +166,9 @@ a {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
-.light-theme .glass-panel:hover {
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* BUTTONS Overhaul */
 .neon-btn {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  color: #fff !important; /* Force true white for premium feel */
+  color: #fff !important;
   border: none;
   padding: 0.75rem 1.75rem;
   border-radius: 12px;
@@ -189,12 +179,6 @@ a {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   box-shadow: 0 4px 15px var(--primary-glow);
-  position: relative;
-  text-transform: none; /* Removed screaming caps */
-}
-
-.light-theme .neon-btn {
-  color: #fff !important;
 }
 
 .neon-btn:hover {
@@ -216,18 +200,12 @@ a {
   backdrop-filter: blur(8px);
 }
 
-.light-theme .outline-btn {
-  background: rgba(0, 0, 0, 0.02);
-  color: var(--text-main);
-}
-
 .outline-btn:hover {
   border-color: var(--text-muted);
   background: var(--glass-highlight);
   transform: translateY(-2px);
 }
 
-/* Modals & Overlays */
 .profile-lock-overlay {
   position: fixed;
   inset: 0;
@@ -237,10 +215,6 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.light-theme .profile-lock-overlay {
-  background: rgba(255, 255, 255, 0.4);
 }
 
 .lock-card {
@@ -258,30 +232,12 @@ a {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
-.light-theme .lock-card {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-}
-
-.lock-card h2 {
-  background: linear-gradient(135deg, var(--text-main) 0%, var(--text-muted) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.lock-icon {
-  margin-bottom: 0.5rem;
-  color: var(--primary);
-}
-
 .polite-msg {
   color: var(--text-muted);
   line-height: 1.6;
   font-size: 1.05rem;
-  max-width: 400px;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -293,43 +249,4 @@ a {
 ::-webkit-scrollbar-thumb {
   background: var(--glass-border);
   border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
-/* Pages & Loader */
-.loader-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: 1px;
-  color: var(--primary);
-  font-size: 1.2rem;
-  animation: pulse 2s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 450px;
-  padding: 3.5rem 3rem;
-  z-index: 10;
-  border-radius: 24px;
 }

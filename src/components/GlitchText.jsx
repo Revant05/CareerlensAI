@@ -1,8 +1,7 @@
 import React from 'react';
-
+import { motion } from 'framer-motion';
 import './GlitchText.css';
 
-// eslint-disable-next-line no-unused-vars
 const GlitchText = ({ text, as: Component = 'h1', className = '' }) => {
     return (
         <div className={`glitch-wrapper ${className}`}>

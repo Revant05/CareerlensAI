@@ -7,7 +7,10 @@ const Token = require('../models/Token');
 
 // Middleware to check for Recruiter role
 const checkRecruiter = (req, res, next) => {
-    if (req.user.role !== 'recruiter' && req.user.role !== 'admin') {
+    // Check role field, or fallback: if companyName field exists it's a recruiter document
+    const isRecruiter = req.user.role === 'recruiter' || req.user.role === 'admin';
+    const isAdminDoc = req.user.role === 'admin';
+    if (!isRecruiter && !isAdminDoc) {
         return res.status(403).json({ msg: 'Access denied: Recruiters only' });
     }
     next();
@@ -96,13 +99,7 @@ router.get('/dashboard-stats', auth, checkRecruiter, async (req, res) => {
             totalOpenings,
             totalApplicants,
             topMatchesCount,
-            activeJobs: jobs.filter(j => j.isActive).length,
-            growthData: [
-                { name: 'Jan', applicants: Math.floor(totalApplicants * 0.1), matches: 5 },
-                { name: 'Feb', applicants: Math.floor(totalApplicants * 0.2), matches: 10 },
-                { name: 'Mar', applicants: Math.floor(totalApplicants * 0.5), matches: 18 },
-                { name: 'Apr', applicants: totalApplicants, matches: topMatchesCount }
-            ]
+            activeJobs: jobs.filter(j => j.isActive).length
         });
     } catch (err) {
         console.error(err.message);
@@ -137,8 +134,12 @@ router.delete('/jobs/:id', auth, checkRecruiter, async (req, res) => {
         const job = await Job.findById(req.params.id);
         if (!job) return res.status(404).json({ msg: 'Job not found' });
 
-        if (job.recruiterId.toString() !== req.user.id && req.user.role !== 'admin') {
-            return res.status(401).json({ msg: 'User not authorized' });
+        // Compare both sides as strings to avoid ObjectId vs string mismatch
+        const jobOwnerId = job.recruiterId?.toString();
+        const requestUserId = req.user.id?.toString() || req.user._id?.toString();
+
+        if (jobOwnerId !== requestUserId && req.user.role !== 'admin') {
+            return res.status(401).json({ msg: 'User not authorized to delete this job' });
         }
 
         await Job.findByIdAndDelete(req.params.id);
@@ -148,5 +149,6 @@ router.delete('/jobs/:id', auth, checkRecruiter, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 module.exports = router;

@@ -8,6 +8,8 @@ import ProfileAnalysis from './pages/profileanalysis';
 import MockInterview from './pages/mockinterview';
 import SkillEvaluation from './pages/skillevaluation';
 import AssessmentHistory from './pages/AssessmentHistory';
+import CertificateSuggestions from './pages/CertificateSuggestions';
+import VideoCall from './pages/VideoCall';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfileGuard from './components/ProfileGuard';
 import Layout from './components/Layout';
@@ -23,7 +25,7 @@ import AdminDashboard from './pages/admindashboard';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: '/login',
@@ -90,12 +92,20 @@ const router = createBrowserRouter([
         element: <ProfileGuard><SkillEvaluation /></ProfileGuard>,
       },
       {
+        path: 'certificates',
+        element: <ProfileGuard><CertificateSuggestions /></ProfileGuard>,
+      },
+      {
         path: 'roadmap',
         element: <ProfileGuard><RoadmapList /></ProfileGuard>,
       },
       {
         path: 'roadmap/:id',
         element: <ProfileGuard><RoadmapDetail /></ProfileGuard>,
+      },
+      {
+        path: 'video-call/:roomId',
+        element: <VideoCall />,
       }
     ]
   }
