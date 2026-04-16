@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 const animations = {
     initial: { opacity: 0, y: 20 },
@@ -9,7 +9,7 @@ const animations = {
 
 const AnimatedPage = ({ children, className }) => {
     return (
-        <motion.div
+        <Motion.div
             variants={animations}
             initial="initial"
             animate="animate"
@@ -18,7 +18,7 @@ const AnimatedPage = ({ children, className }) => {
             className={className}
         >
             {children}
-        </motion.div>
+        </Motion.div>
     );
 };
 

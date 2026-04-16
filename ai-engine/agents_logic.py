@@ -17,8 +17,22 @@ SMART_MODEL = "llama-3.3-70b-versatile"   # Deep analysis (high quality)
 client = AsyncGroq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # ─────────────────────────────────────────────────────
-# DOMAIN SYSTEM PROMPTS — All 24 domains + General
+# STRICT INTERVIEW BEHAVIOUR — Injected into every prompt
 # ─────────────────────────────────────────────────────
+STRICT_BEHAVIOR = """
+
+INTERVIEWER CONDUCT RULES (follow strictly):
+- You are a STRICT, demanding senior interviewer at a top-tier tech company.
+- Do NOT be warm or over-encouraging. Be professional, direct, and precise.
+- If an answer is vague, incomplete, or lacks technical depth — call it out immediately before asking the next question. Example: "That answer was surface-level. I expected more technical depth."
+- Never accept one-word or two-word answers. Always probe: "Can you elaborate? Give me a concrete example."
+- Do not repeat the candidate's answer back to them. Skip filler acknowledgements like "Great!" or "Good point!"
+- Escalate difficulty with each exchange. Early questions should be easy, later ones should be genuinely hard.
+- If the candidate goes off-topic, redirect them immediately.
+- Ask follow-up sub-questions if a critical topic wasn't covered in their answer.
+- Keep your response SHORT: one brief critical remark (if needed), then ONE clear question. Never exceed 3 sentences total.
+"""
+
 DOMAIN_PROMPTS = {
     "frontend developer": """You are a senior Frontend Engineer conducting a technical interview at a top tech company.
 Cover these areas progressively (easy → hard):
@@ -429,20 +443,21 @@ class CareerAgents:
         Falls back to static questions if API is unavailable.
         """
         domain_key = normalize_domain(domain)
-        system_prompt = DOMAIN_PROMPTS.get(domain_key, DOMAIN_PROMPTS["general"])
+        # Prepend strict behavior rules to every domain prompt
+        base_prompt = DOMAIN_PROMPTS.get(domain_key, DOMAIN_PROMPTS["general"])
+        system_prompt = base_prompt + STRICT_BEHAVIOR
 
-        # Opening greeting — short and domain-specific
+        # Opening greeting — direct and professional, no fluff
         if not history or all(not h.strip() for h in history):
             domain_display = domain_key.title()
             if "top companies" in domain_key:
-                return ("Welcome. I'm your FAANG-style interviewer today — we'll cover system design, "
-                        "technical depth, and leadership. Let's begin: please introduce yourself briefly.")
+                return ("I'll be your interviewer today. We're covering system design, algorithms, and leadership. "
+                        "No hints, no second chances. Start by introducing yourself — name, years of experience, and your strongest engineering domain.")
             elif "general" in domain_key:
-                return ("Hello! I'm your AI interviewer. We'll cover background, tech, teamwork, "
-                        "and career goals. Let's start — tell me your name and what got you into tech.")
+                return ("Let's skip the pleasantries. Tell me your name, your background, and the most technically challenging thing you've built.")
             else:
-                return (f"Hi! I'm your {domain_display} interviewer. "
-                        f"Let's begin — give me a quick intro: your name and your experience with {domain_key}.")
+                return (f"I'm your {domain_display} interviewer. I expect precise, example-driven answers — vague responses will be challenged. "
+                        f"Begin: state your name and your concrete experience level in {domain_key}.")
 
         # Try Groq API
         if client:
@@ -450,9 +465,10 @@ class CareerAgents:
                 messages = build_conversation_messages(history, system_prompt)
                 messages.append({
                     "role": "user",
-                    "content": ("Based on the conversation so far, ask the next most appropriate interview question. "
-                                "Ask ONE question only. Keep it focused and specific. "
-                                "Briefly acknowledge the candidate's last response naturally before asking.")
+                    "content": ("Based on the conversation so far, ask the next interview question. "
+                                "If the last answer was vague or incomplete, briefly point that out first, then ask the next harder question. "
+                                "Ask ONE question only. Be direct. No filler words or encouragement. "
+                                "Escalate technical complexity with each round.")
                 })
 
                 response = await client.chat.completions.create(
@@ -617,6 +633,70 @@ Return JSON: {{"running_score": <0-100>, "sentiment": <"positive"/"neutral"/"ner
             if key.lower() in status.lower():
                 return advice
         return "Stay focused and consistent. Every interview — win or learn. You're building skills that compound over time."
+
+    @staticmethod
+    async def validate_input(text: str, field_name: str) -> dict:
+        """Validate if the string is meaningful text or gibberish using LLM."""
+        if not text or len(text) < 3:
+            return {"is_valid": False, "reason": "Input is too short"}
+            
+        if not client:
+            return {"is_valid": True, "reason": "Validaion bypassed - LLM offline"}
+            
+        try:
+            response = await client.chat.completions.create(
+                model=FAST_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a data validation assistant. Return exactly JSON. Example: {\"is_valid\": false, \"reason\": \"Random characters\"}"},
+                    {"role": "user", "content": f"Analyze this '{field_name}' text input: '{text}'. Check if it's meaningful English/technical terms or just gibberish keyboard mashing like 'asdfg'. Return JSON: {{\"is_valid\": <true/false>, \"reason\": \"<string>\"}}"}
+                ],
+                max_tokens=150,
+                temperature=0.0,
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            return data
+        except Exception as e:
+            print(f"[Groq validation error]: {e}")
+            return {"is_valid": True, "reason": "Error parsing LLM response, bypassed."}
+
+    @staticmethod
+    async def generate_dynamic_roadmap(aspirations: list) -> dict:
+        """Generate a personalized career roadmap based on multiple aspirations using LLM."""
+        if not aspirations:
+            return {"skills": [], "certifications": [], "projects": [], "market_trend_summary": "Please provide aspirations."}
+
+        aspirations_str = ", ".join(aspirations)
+        
+        if not client:
+            return {
+                "skills": ["JavaScript", "Python", "Cloud Basics"], 
+                "certifications": ["AWS Practitioner", "GCP Cloud Engineer"],
+                "projects": ["Build a CRUD app", "Set up a CI/CD pipeline"],
+                "market_trend_summary": f"Strong general demand in the current market for {aspirations_str}."
+            }
+
+        try:
+            response = await client.chat.completions.create(
+                model=SMART_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert technical career advisor. You analyze career aspirations and provide highly relevant, up-to-date market trends, required skills, recognized certifications, and project ideas. Return strictly JSON."},
+                    {"role": "user", "content": f"The user has the following career aspirations: {aspirations_str}. Generate a cohesive roadmap combining these areas. Return JSON schema: {{\"skills\": [list of 5-8 key technical skills], \"certifications\": [list of 3-5 recognized certs], \"projects\": [list of 2-3 project ideas], \"market_trend_summary\": \"A short 3 sentence summary of current market trends for these roles\"}}"}
+                ],
+                max_tokens=800,
+                temperature=0.4,
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            return data
+        except Exception as e:
+            print(f"[Groq roadmap error]: {e}")
+            return {
+                "skills": ["Analysis Failed"], 
+                "certifications": [],
+                "projects": [],
+                "market_trend_summary": "Failed to generate dynamic roadmap. Try again later."
+            }
 
     @staticmethod
     def _heuristic_analysis(user_msgs: list, domain_key: str, avg_len: float, total_words: int) -> dict:

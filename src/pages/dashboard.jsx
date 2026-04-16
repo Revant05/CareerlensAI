@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';
 import SkillChart from '../components/skillchart.jsx';
 import GlitchText from '../components/GlitchText';
@@ -12,8 +11,7 @@ import './dashboard.css';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, logout, setUser } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { user, setUser } = useAuth();
   const [liveUser, setLiveUser] = useState(user);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -25,18 +23,17 @@ export default function Dashboard() {
         setLiveUser(res.data);
         setUser(res.data); // update global context too
       } catch (err) {
+        console.error(err);
         setLiveUser(user); // fallback to context
       } finally {
         setDataLoaded(true);
       }
     };
     fetchLiveData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+
 
   const activeUser = liveUser || user;
 
@@ -57,24 +54,7 @@ export default function Dashboard() {
 
   return (
     <AnimatedPage className="dashboard-container">
-      <nav className="dashboard-nav glass-panel">
-        <div className="nav-branding">
-          <img className="logo" src="logo.jpeg" alt="Logo" />
-          <GlitchText text="CareerLens AI" as="div" className="nav-logo" />
-        </div>
-        <div className="nav-profile">
-          <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
-            {activeUser?.role === 'admin' ? <Shield size={18} style={{ marginRight: '5px' }} /> : <User size={18} style={{ marginRight: '5px' }} />}
-            {activeUser?.name || 'User'}
-          </button>
-          <button onClick={toggleTheme} className="logout-btn" title="Toggle Theme" style={{ marginRight: '10px' }}>
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <button onClick={handleLogout} className="logout-btn" title="Logout">
-            <LogOut size={20} />
-          </button>
-        </div>
-      </nav>
+
 
       <div className="dashboard-wrapper container">
         <section className="hero-section">

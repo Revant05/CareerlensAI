@@ -33,3 +33,20 @@ class LiveAnalysisResponse(BaseModel):
     sentiment: str
     topics_detected: List[str]
     pace_feedback: str
+
+class ValidationRequest(BaseModel):
+    text: str
+    field_name: str
+
+class ValidationResponse(BaseModel):
+    is_valid: bool
+    reason: str
+
+class RoadmapRequest(BaseModel):
+    aspirations: List[str]
+
+class RoadmapResponse(BaseModel):
+    skills: List[str]
+    certifications: List[str]
+    projects: List[str]
+    market_trend_summary: str

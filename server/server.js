@@ -16,7 +16,7 @@ const app = express();
 // Rate Limiting: Prevent Brute Force
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    max: 9999, // Temporarily increased from 100 to bypass limit for testing
     standardHeaders: true,
     legacyHeaders: false,
     message: { msg: 'Too many requests from this IP, please try again after 15 minutes' }

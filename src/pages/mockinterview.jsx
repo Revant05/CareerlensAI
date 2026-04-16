@@ -46,7 +46,7 @@ const featuredInterview = {
 
 export default function MockInterview() {
     const navigate = useNavigate();
-    const { user, setUser } = useAuth();
+    const { setUser } = useAuth();
     const [selectedRole, setSelectedRole] = useState(null);
     const [interviewActive, setInterviewActive] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -61,12 +61,12 @@ export default function MockInterview() {
     });
     const [isAiThinking, setIsAiThinking] = useState(false);
     const recognitionRef = useRef(null);
+    const [speakingRate, setSpeakingRate] = useState(1.05);
     const [transcript, setTranscript] = useState([
         { role: 'assistant', content: 'Hello! I am your AI interviewer. Shall we begin?' }
     ]);
     const [interviewResults, setInterviewResults] = useState(null);
     const [showResults, setShowResults] = useState(false);
-    const [voices, setVoices] = useState([]);
     const location = useLocation();
     // Live metrics tracking refs
     const speechStartRef = useRef(null);
@@ -78,10 +78,7 @@ export default function MockInterview() {
     // Load voices and handle async nature of getVoices()
     useEffect(() => {
         const loadVoices = () => {
-            const availableVoices = window.speechSynthesis.getVoices();
-            if (availableVoices.length > 0) {
-                setVoices(availableVoices);
-            }
+            window.speechSynthesis.getVoices();
         };
 
         if ('speechSynthesis' in window) {
@@ -106,6 +103,7 @@ export default function MockInterview() {
                 handleRoleSelect(role);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     // Initialize Web Speech API
@@ -149,24 +147,30 @@ export default function MockInterview() {
                     const lengthBonus = Math.min(15, Math.floor(wordCount / 5));
                     const newConfidence = Math.max(20, Math.min(99, 70 - fillerPenalty + lengthBonus));
 
-                    setLiveMetrics(prev => ({
-                        ...prev,
-                        fillerWords: fillerCountRef.current,
-                        speakingPace: wpm,
-                        confidence: newConfidence
-                    }));
+                    const now = Date.now();
+                    const isFinal = event.results[event.results.length - 1].isFinal;
+                    
+                    if (!window.lastRecogUpdate || now - window.lastRecogUpdate > 250 || isFinal) {
+                        window.lastRecogUpdate = now;
+                        setLiveMetrics(prev => ({
+                            ...prev,
+                            fillerWords: fillerCountRef.current,
+                            speakingPace: wpm,
+                            confidence: newConfidence
+                        }));
 
-                    setTranscript(prev => {
-                        const newArr = [...prev];
-                        const lastMsg = newArr[newArr.length - 1];
-                        if (lastMsg?.role === 'user') {
-                            newArr[newArr.length - 1] = { role: 'user', content: fullStr };
-                            return newArr;
-                        } else {
-                            speechStartRef.current = Date.now();
-                            return [...prev, { role: 'user', content: fullStr }];
-                        }
-                    });
+                        setTranscript(prev => {
+                            const newArr = [...prev];
+                            const lastMsg = newArr[newArr.length - 1];
+                            if (lastMsg?.role === 'user') {
+                                newArr[newArr.length - 1] = { role: 'user', content: fullStr };
+                                return newArr;
+                            } else {
+                                speechStartRef.current = now;
+                                return [...prev, { role: 'user', content: fullStr }];
+                            }
+                        });
+                    }
                 }
             };
 
@@ -205,10 +209,11 @@ export default function MockInterview() {
                 recognitionRef.current.onend = null;
                 recognitionRef.current.onresult = null;
                 recognitionRef.current.onerror = null;
-                try { recognitionRef.current.stop(); } catch (e) { }
+                try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
                 recognitionRef.current = null;
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Sync state to window for the onend callback (avoids closure staleness)
@@ -250,15 +255,20 @@ export default function MockInterview() {
 
             const currentVoices = window.speechSynthesis.getVoices();
 
-            // Voice priority: Indian male → Indian female → Google en-IN → any en-IN → Google en → any en
+            // Voice priority: High-quality Neural Indian → Local Indian → Google Indian → Any Natural English → Any English
             const preferredVoice =
-                currentVoices.find(v => v.name === 'Microsoft Ravi - English (India)') ||       // Windows Indian male
-                currentVoices.find(v => v.name === 'Microsoft Heera - English (India)') ||      // Windows Indian female
+                currentVoices.find(v => v.name.includes('Online (Natural) - English (India)')) || // Edge Neural Indian (extremely high quality)
+                currentVoices.find(v => v.name.includes('Neerja') && v.name.includes('Natural')) || // Edge Neural Neerja
+                currentVoices.find(v => v.name.includes('Prabhat') && v.name.includes('Natural')) || // Edge Neural Prabhat
+                currentVoices.find(v => v.name === 'Microsoft Ravi - English (India)') ||       // Windows local Indian male
+                currentVoices.find(v => v.name === 'Microsoft Heera - English (India)') ||      // Windows local Indian female
                 currentVoices.find(v => v.name.toLowerCase().includes('ravi')) ||               // Any Ravi voice
                 currentVoices.find(v => v.name.toLowerCase().includes('heera')) ||              // Any Heera voice
                 currentVoices.find(v => (v.lang === 'en-IN' || v.lang === 'en_IN') && v.name.includes('Google')) || // Chrome Google en-IN
+                currentVoices.find(v => (v.lang === 'en-IN' || v.lang === 'en_IN') && v.name.includes('Natural')) || // Any other en-IN Natural
                 currentVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN') ||           // Any en-IN
                 currentVoices.find(v => v.name.toLowerCase().includes('india')) ||              // Name has India
+                currentVoices.find(v => v.name.includes('Natural') && v.lang.startsWith('en')) || // Any English Natural voice
                 currentVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) || // Google en
                 currentVoices.find(v => v.lang.startsWith('en-')) ||
                 currentVoices[0];
@@ -266,16 +276,15 @@ export default function MockInterview() {
             if (preferredVoice) utterance.voice = preferredVoice;
 
             // Human-like tuning:
-            // Rate 0.88 = deliberate, measured — like a real interviewer thinking as they speak
-            // Pitch 0.95 = slightly lower than robotic default = more natural, authoritative
-            utterance.pitch = 0.95;
-            utterance.rate = 0.88;
+            // Using 1.0 pitch for neural voices sounds more authentic, and speakingRate for pace.
+            utterance.pitch = 1.0;
+            utterance.rate = speakingRate;
             utterance.volume = 1.0;
 
             utterance.onstart = () => {
                 setIsSpeaking(true);
                 setAiStatus('Interviewer is speaking...');
-                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) { } }
+                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) { console.error(e); } }
             };
             utterance.onend = () => {
                 setIsSpeaking(false);
@@ -295,14 +304,51 @@ export default function MockInterview() {
         }, 100);
     };
 
-
+    // AI Speaking Function via Backend MP3 Base64 Stream (Extremely realistic Edge Neural voices)
+    const playBackendAudio = (base64Audio, fallbackText) => {
+        try {
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            
+            const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+            audio.playbackRate = speakingRate;
+            window.currentAiAudio = audio; // Keep track for termination
+            
+            audio.onplay = () => {
+                setIsSpeaking(true);
+                setAiStatus('Interviewer is speaking...');
+                if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch (e) {} }
+            };
+            
+            audio.onended = () => {
+                setIsSpeaking(false);
+                setAiStatus('Listening...');
+                if (recognitionRef.current && !window.isMutedState) {
+                    try { recognitionRef.current.start(); } catch (e) {}
+                }
+            };
+            
+            audio.onerror = () => {
+                console.error("Audio playback error, taking fallback");
+                speak(fallbackText);
+            };
+            
+            audio.play().catch(e => {
+                console.error("Autoplay blocked:", e);
+                speak(fallbackText);
+            });
+        } catch (err) {
+            console.error("Backend audio failed:", err);
+            speak(fallbackText);
+        }
+    };
 
     // AI Question Logic
     const fetchNextQuestion = async (currentTranscript, domainOverride = null) => {
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 8000); // Hard 8s timeout
         try {
             setIsAiThinking(true);
             setAiStatus('AI is thinking...');
-            // Use explicit override first — selectedRole may be stale on first call
             const domainToUse = domainOverride || selectedRole || 'general';
 
             const response = await axios.get(`${AI_ENGINE_URL}/next-question`, {
@@ -310,14 +356,27 @@ export default function MockInterview() {
                     domain: domainToUse,
                     history: currentTranscript.map(m => m.content).join('|||')
                 },
-                headers: { 'X-Internal-Secret': 'careerlens_default_67890' }
+                headers: { 'X-Internal-Secret': 'careerlens_default_67890' },
+                signal: controller.signal
             });
 
+            clearTimeout(fetchTimeout);
             const nextQ = response.data.question;
             setTranscript(prev => [...prev, { role: 'assistant', content: nextQ }]);
-            speak(nextQ);
+            
+            // Prefer high-quality backend streaming if provided, else use browser TTS instantly
+            if (response.data.audioBase64) {
+                playBackendAudio(response.data.audioBase64, nextQ);
+            } else {
+                speak(nextQ);
+            }
         } catch (err) {
-            console.error('AI thinking failed:', err);
+            clearTimeout(fetchTimeout);
+            if (err.name === 'CanceledError' || err.name === 'AbortError') {
+                console.warn('AI question fetch timed out, using fallback');
+            } else {
+                console.error('AI thinking failed:', err);
+            }
             const fallback = "Tell me more about your recent project achievements.";
             setTranscript(prev => [...prev, { role: 'assistant', content: fallback }]);
             speak(fallback);
@@ -335,19 +394,22 @@ export default function MockInterview() {
         if (lastMessage?.role === 'user' && lastMessage.content.length > 2) {
             const timer = setTimeout(() => {
                 if (recognitionRef.current) {
-                    try { recognitionRef.current.stop(); } catch (e) { }
+                    try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
                 }
                 fetchNextQuestion(transcript);
-            }, 3000); // 3s wait is better for natural pause detection
+            }, 800); // 0.8s wait is very fast, reducing analysis stall
             return () => clearTimeout(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transcript, interviewActive, isAiThinking, isSpeaking]);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role.id);
         setInterviewActive(true);
         setTranscript([]);
-        // Pass role.id DIRECTLY — don't rely on selectedRole state (it's async!)
+        setIsSpeaking(false);
+        setAiStatus('Preparing your interview...');
+        // Fetch first question immediately — no local greeting to avoid double-speaking
         fetchNextQuestion([], role.id);
     };
 
@@ -380,14 +442,18 @@ export default function MockInterview() {
             try {
                 const userRes = await api.get('/auth/me');
                 if (setUser) setUser(userRes.data);
-            } catch (e) { /* non-critical */ }
+            } catch (e) { console.error(e); }
 
         } catch (err) {
             console.error('Failed to save interview:', err);
             toast.error('Failed to save interview results.');
         } finally {
             if (recognitionRef.current) {
-                try { recognitionRef.current.stop(); } catch (e) { }
+                try { recognitionRef.current.stop(); } catch (e) { console.error(e); }
+            }
+            if (window.currentAiAudio) {
+                window.currentAiAudio.pause();
+                window.currentAiAudio.currentTime = 0;
             }
             window.speechSynthesis.cancel();
             setInterviewActive(false);
@@ -558,6 +624,18 @@ export default function MockInterview() {
                                         <div className="hud-metric">
                                             <span>SPEECH_PACE</span>
                                             <div className="hud-value">{Math.round(liveMetrics.speakingPace)} WPM</div>
+                                        </div>
+                                        <div className="hud-metric" style={{ marginTop: '15px' }}>
+                                            <span>AI_VOICE_SPEED: {speakingRate.toFixed(2)}x</span>
+                                            <input 
+                                                type="range" 
+                                                min="0.5" 
+                                                max="2.0" 
+                                                step="0.05" 
+                                                value={speakingRate} 
+                                                onChange={(e) => setSpeakingRate(parseFloat(e.target.value))} 
+                                                style={{ width: '100%', accentColor: 'var(--matrix)', cursor: 'pointer', marginTop: '5px' }} 
+                                            />
                                         </div>
                                     </div>
                                 </Motion.div>

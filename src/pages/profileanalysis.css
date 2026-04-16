@@ -108,7 +108,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--text-main);
     flex-shrink: 0;
 }
 
@@ -415,7 +415,7 @@
     height: 32px;
     border-radius: 50%;
     background: var(--primary);
-    color: white;
+    color: var(--text-main);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -478,7 +478,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--text-main);
     flex-shrink: 0;
 }
 

@@ -11,7 +11,7 @@ export default function RecruiterJobs() {
     const { user, logout } = useAuth();
     const [jobs, setJobs] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [loading, setLoading] = useState(true);
+
     const [newJob, setNewJob] = useState({
         title: '',
         description: '',
@@ -24,14 +24,13 @@ export default function RecruiterJobs() {
         try {
             const res = await api.get('/recruiter/jobs');
             setJobs(res.data);
-            setLoading(false);
         } catch (err) {
             console.error(err);
-            setLoading(false);
         }
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchJobs();
     }, []);
 

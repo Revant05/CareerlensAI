@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion as Motion } from 'framer-motion';
 import { Briefcase, MapPin, DollarSign, Send, CheckCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+
+
 import AnimatedPage from '../components/AnimatedPage';
 import GlitchText from '../components/GlitchText';
 import './dashboard.css'; // Reuse glass-panel styles
 
 export default function JobBoard() {
     const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
 
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/roadmap', {
+                await axios.get('http://localhost:5000/api/roadmap', {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
                 // Note: In real app, we'd have a specific GET api/jobs, reusing for demo
@@ -23,16 +22,14 @@ export default function JobBoard() {
                     { _id: '1', title: 'Senior Frontend Developer', companyName: 'Nexus Tech', description: 'Expert in React & Framer Motion required.', requirements: ['React', 'CSS'], location: 'Remote', salaryRange: '$120k - $150k' },
                     { _id: '2', title: 'Fullstack Engineer', companyName: 'CyberFlow', description: 'MERN stack specialist with AI background.', requirements: ['Node.js', 'React'], location: 'Mumbai, IN', salaryRange: '₹12L - ₹20L' }
                 ]);
-                setLoading(false);
             } catch (err) {
                 console.error(err);
-                setLoading(false);
             }
         };
         fetchJobs();
     }, []);
 
-    const handleApply = (id) => {
+    const handleApply = () => {
         alert("Application sent successfully! Recruiter will be notified.");
     };
 

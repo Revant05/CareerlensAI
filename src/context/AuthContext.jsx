@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
                     const res = await api.get('/auth/me');
                     setUser(res.data);
                 } catch (err) {
-                    console.error("Auth initialization failed");
+                    console.error("Auth initialization failed", err);
                     localStorage.removeItem('token');
                 }
             }
@@ -68,4 +68,5 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

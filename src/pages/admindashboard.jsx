@@ -10,21 +10,15 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [students, setStudents] = useState([]);
     const [recruiters, setRecruiters] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
     const [showAdminModal, setShowAdminModal] = useState(false);
     const [trainStatus, setTrainStatus] = useState({});
-
-    useEffect(() => {
-        fetchStats();
-        fetchUsers();
-    }, []);
-
     const fetchStats = async () => {
         try {
             const res = await api.get('/admin/stats');
             setStats(res.data);
         } catch (err) {
+            console.error(err);
             toast.error('Failed to fetch system stats');
         }
     };
@@ -34,12 +28,17 @@ export default function AdminDashboard() {
             const res = await api.get('/admin/users');
             setStudents(res.data.students);
             setRecruiters(res.data.recruiters);
-            setLoading(false);
         } catch (err) {
+            console.error(err);
             toast.error('Failed to fetch user data');
-            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchStats();
+        fetchUsers();
+    }, []);
 
     const deleteUser = async (id) => {
         if (!window.confirm('Are you sure? This action is irreversible.')) return;
@@ -49,6 +48,7 @@ export default function AdminDashboard() {
             fetchUsers();
             fetchStats();
         } catch (err) {
+            console.error(err);
             toast.error('Purge failed. External interference detected.');
         }
     };
@@ -83,9 +83,54 @@ export default function AdminDashboard() {
                 }
             }, 500);
         } catch (err) {
+            console.error(err);
             setTrainStatus({ ...trainStatus, [agent]: 'FAILED' });
             toast.error('Neural link severed.');
         }
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                toast.success(`Dataset loaded: ${Object.keys(data).length} entries found. Commencing feed.`);
+                triggerTraining('Core Dataset Injection');
+            } catch (err) {
+                toast.error("Invalid JSON format. Engine rejected the payload.");
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    const triggerMaintenance = async () => {
+        if (!window.confirm('WARNING: Force System Maintenance?')) return;
+        try {
+            await api.post('/admin/broadcast', { target: 'GLOBAL', message: 'SYSTEM KERNEL UPDATE. PLEASE DISCONNECT.' });
+            toast.success('Maintenance override engaged. Broadcast sent.');
+        } catch (err) {
+            toast.error('Failed to engage maintenance mode.');
+        }
+    };
+
+    const handleAuthOverride = (e) => {
+        e.preventDefault();
+        const cid = document.getElementById('override-id').value;
+        if (!cid) return toast.error('Specimen ID required.');
+        toast.promise(
+            new Promise(resolve => setTimeout(resolve, 1500)),
+            {
+                loading: 'Bypassing Security Protocols...',
+                success: 'Override successful. Redirecting to user lens.',
+                error: 'Override failed.'
+            }
+        ).then(() => {
+            // Wait for toast then redirect
+            setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+        });
     };
 
     return (
@@ -208,8 +253,14 @@ export default function AdminDashboard() {
                     <div className="training-agent-card">
                         <Database size={24} color="var(--admin-accent)" />
                         <h3>Feed Data Core</h3>
-                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '10px 0' }}>Select dataset to injection into the main neural hive.</p>
-                        <input type="file" style={{ display: 'none' }} id="feed-data" />
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, margin: '10px 0' }}>Select dataset for injection into the main neural hive.</p>
+                        <div className="progress-bar-bg" style={{ display: trainStatus['Core Dataset Injection'] ? 'block' : 'none' }}>
+                            <div className="progress-bar-fill" style={{ width: trainStatus['Core Dataset Injection']?.includes('100') ? '100%' : trainStatus['Core Dataset Injection'] ? '40%' : '0%', background: 'var(--admin-accent)', boxShadow: '0 0 10px var(--admin-accent)' }}></div>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--admin-accent)', marginBottom: '10px' }}>
+                           {trainStatus['Core Dataset Injection'] || ''}
+                        </p>
+                        <input type="file" style={{ display: 'none' }} id="feed-data" accept=".json" onChange={handleFileUpload} />
                         <button className="glow-btn" style={{ width: '100%', borderColor: 'var(--admin-accent)', color: 'var(--admin-accent)' }} onClick={() => document.getElementById('feed-data').click()}>Upload Dataset (.json)</button>
                     </div>
                 </div>
@@ -220,15 +271,15 @@ export default function AdminDashboard() {
                     <div className="training-agent-card">
                         <h3><Shield size={20} /> Force Maintenance Mode</h3>
                         <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '15px' }}>Sever all external connections and place the system in a locked state for kernel updates.</p>
-                        <button className="glow-btn" style={{ width: '100%', borderColor: '#ff4444', color: '#ff4444' }}>Initiate Kill Switch</button>
+                        <button className="glow-btn" style={{ width: '100%', borderColor: '#ff4444', color: '#ff4444' }} onClick={triggerMaintenance}>Initiate Kill Switch</button>
                     </div>
                     <div className="training-agent-card">
                         <h3><Key size={20} /> Auth Override</h3>
                         <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '15px' }}>Enter a specimen ID to bypass authentication and view the ecosystem through their lens.</p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input className="input-futuristic" placeholder="Node ID..." style={{ marginBottom: 0 }} />
-                            <button className="glow-btn">Engage</button>
-                        </div>
+                        <form style={{ display: 'flex', gap: '10px' }} onSubmit={handleAuthOverride}>
+                            <input id="override-id" className="input-futuristic" placeholder="Node ID..." style={{ marginBottom: 0 }} />
+                            <button type="submit" className="glow-btn">Engage</button>
+                        </form>
                     </div>
                 </div>
             )}

@@ -8,6 +8,30 @@ const Recruiter = require('../models/Recruiter');
 const Admin = require('../models/Admin');
 const Token = require('../models/Token');
 const RoadmapProgress = require('../models/RoadmapProgress');
+const axios = require('axios');
+
+// AI Engine configuration
+const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://127.0.0.1:8001';
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET || 'careerlens_default_67890';
+
+// Helper to validate text with AI
+const validateProfileText = async (text, fieldName) => {
+    if (!text) return { isValid: true };
+    try {
+        const response = await axios.post(`${AI_ENGINE_URL}/validate-profile`, {
+            text,
+            field_name: fieldName
+        }, {
+            headers: {
+                'x-internal-secret': INTERNAL_SECRET
+            }
+        });
+        return { isValid: response.data.is_valid, reason: response.data.reason };
+    } catch (err) {
+        console.error(`AI Validation error for ${fieldName}:`, err.message);
+        return { isValid: true }; // Bypass if AI is down
+    }
+};
 
 // Helper to find user in all collections
 const findUserByEmail = async (email) => {
@@ -155,11 +179,32 @@ router.put('/profile', auth, async (req, res) => {
         if (!user) return res.status(404).json({ msg: 'User not found' });
 
         if (user.role === 'student') {
-            const { headline, aspiration, phone, resume, swot, skills, education, certifications } = req.body;
-            if (headline) user.headline = headline;
-            if (aspiration) user.aspiration = aspiration;
-            if (phone) user.phone = phone;
-            if (resume) user.resume = resume;
+            const { headline, aspiration, aspirations, phone, resume, swot, skills, education, certifications } = req.body;
+            
+            // Validate Headling and Aspirations
+            if (headline) {
+                const validation = await validateProfileText(headline, 'headline');
+                if (!validation.isValid) return res.status(400).json({ msg: `AI Validation: Headline is invalid. ${validation.reason}` });
+            }
+            
+            let finalAspirations = [];
+            if (Array.isArray(aspirations) && aspirations.length > 0) {
+                finalAspirations = aspirations;
+            } else if (aspiration) {
+                finalAspirations = [aspiration];
+            }
+            
+            if (finalAspirations.length > 0) {
+                const validation = await validateProfileText(finalAspirations.join(', '), 'aspirations');
+                if (!validation.isValid) return res.status(400).json({ msg: `AI Validation: Aspirations are invalid. ${validation.reason}` });
+            }
+
+            if (headline !== undefined) user.headline = headline;
+            if (aspiration !== undefined) user.aspiration = aspiration;
+            // Multi-aspiration tags
+            if (finalAspirations.length > 0) user.aspirations = finalAspirations;
+            if (phone !== undefined) user.phone = phone;
+            if (resume !== undefined) user.resume = resume;
             if (swot) user.swot = swot;
             if (skills) user.skills = skills;
             if (education) user.education = education;
@@ -167,7 +212,8 @@ router.put('/profile', auth, async (req, res) => {
 
             const isEduComplete = user.education && user.education.length > 0;
             const isSwotComplete = user.swot && user.swot.strengths.length > 0 && user.swot.weaknesses.length > 0;
-            user.isProfileComplete = !!(user.headline && user.aspiration && isEduComplete && isSwotComplete);
+            const hasAspiration = (user.aspirations && user.aspirations.length > 0) || !!user.aspiration;
+            user.isProfileComplete = !!(user.headline && hasAspiration && isEduComplete && isSwotComplete);
         } else if (user.role === 'recruiter') {
             const { companyName, companyWebsite, phone } = req.body;
             if (companyName) user.companyName = companyName;

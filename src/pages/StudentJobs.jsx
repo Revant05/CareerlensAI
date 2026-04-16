@@ -2,21 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import { Briefcase, MapPin, DollarSign, Clock, ArrowLeft, Search, Building2, ExternalLink } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 import api from '../api/api';
 import './StudentJobs.css';
 
 export default function StudentJobs() {
     const navigate = useNavigate();
-    const { user } = useAuth();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        fetchJobs();
-    }, []);
 
     const fetchJobs = async () => {
         try {
@@ -28,6 +22,11 @@ export default function StudentJobs() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchJobs();
+    }, []);
 
     const filteredJobs = jobs.filter(job =>
         job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

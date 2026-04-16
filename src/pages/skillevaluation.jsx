@@ -370,7 +370,7 @@ const sampleQuestions = {
 
 export default function SkillEvaluation() {
     const navigate = useNavigate();
-    const { user, setUser } = useAuth();
+    const { setUser } = useAuth();
     const [currentState, setCurrentState] = useState('selection'); // selection, assessment, results
     const [selectedStacks, setSelectedStacks] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -383,15 +383,7 @@ export default function SkillEvaluation() {
     const questions = currentStack ? (sampleQuestions[currentStack] || sampleQuestions.generic) : [];
     const currentQuestion = questions[currentQuestionIndex];
 
-    // Timer
-    useEffect(() => {
-        if (currentState === 'assessment' && timeLeft > 0) {
-            const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (timeLeft === 0 && currentState === 'assessment') {
-            handleNextQuestion();
-        }
-    }, [timeLeft, currentState]);
+
 
     const toggleStack = (stackId) => {
         if (selectedStacks.includes(stackId)) {
@@ -458,6 +450,17 @@ export default function SkillEvaluation() {
             setCurrentState('results');
         }
     };
+
+    // Timer
+    useEffect(() => {
+        if (currentState === 'assessment' && timeLeft > 0) {
+            const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (timeLeft === 0 && currentState === 'assessment') {
+            handleNextQuestion();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [timeLeft, currentState]);
 
     const resetEvaluation = () => {
         setCurrentState('selection');

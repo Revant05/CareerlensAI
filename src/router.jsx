@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Login from './pages/login';
 import Signup from './pages/signup';
 import Dashboard from './pages/dashboard';
@@ -7,8 +7,10 @@ import Profile from './pages/profile';
 import ProfileAnalysis from './pages/profileanalysis';
 import MockInterview from './pages/mockinterview';
 import SkillEvaluation from './pages/skillevaluation';
+import AssessmentHistory from './pages/AssessmentHistory';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfileGuard from './components/ProfileGuard';
+import Layout from './components/Layout';
 
 import StudentJobs from './pages/StudentJobs';
 import StudentMessages from './pages/StudentMessages';
@@ -21,7 +23,7 @@ import AdminDashboard from './pages/admindashboard';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Login />,
+    element: <Navigate to="/login" replace />,
   },
   {
     path: '/login',
@@ -32,61 +34,71 @@ const router = createBrowserRouter([
     element: <Signup />,
   },
   {
-    path: '/dashboard',
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
-  },
-  {
-    path: '/recruiter-dashboard',
-    element: <ProtectedRoute><RecruiterDashboard /></ProtectedRoute>,
-  },
-  {
-    path: '/recruiter-jobs',
-    element: <ProtectedRoute><RecruiterJobs /></ProtectedRoute>,
-  },
-  {
-    path: '/recruiter-scan',
-    element: <ProtectedRoute><RecruiterScan /></ProtectedRoute>,
-  },
-  {
-    path: '/recruiter-messages',
-    element: <ProtectedRoute><RecruiterMessages /></ProtectedRoute>,
-  },
-  {
-    path: '/admin-dashboard',
-    element: <ProtectedRoute><AdminDashboard /></ProtectedRoute>,
-  },
-  {
-    path: '/jobs',
-    element: <ProtectedRoute><StudentJobs /></ProtectedRoute>,
-  },
-  {
-    path: '/messages',
-    element: <ProtectedRoute><StudentMessages /></ProtectedRoute>,
-  },
-  {
-    path: '/profile',
-    element: <ProtectedRoute><Profile /></ProtectedRoute>,
-  },
-  {
-    path: '/profile-analysis',
-    element: <ProtectedRoute><ProfileGuard><ProfileAnalysis /></ProfileGuard></ProtectedRoute>,
-  },
-  {
-    path: '/mock-interview',
-    element: <ProtectedRoute><ProfileGuard><MockInterview /></ProfileGuard></ProtectedRoute>,
-  },
-  {
-    path: '/skill-evaluation',
-    element: <ProtectedRoute><ProfileGuard><SkillEvaluation /></ProfileGuard></ProtectedRoute>,
-  },
-  {
-    path: '/roadmap',
-    element: <ProtectedRoute><ProfileGuard><RoadmapList /></ProfileGuard></ProtectedRoute>,
-  },
-  {
-    path: '/roadmap/:id',
-    element: <ProtectedRoute><ProfileGuard><RoadmapDetail /></ProfileGuard></ProtectedRoute>,
-  },
+    path: '/',
+    element: <ProtectedRoute><Layout /></ProtectedRoute>,
+    children: [
+      {
+        path: 'dashboard',
+        element: <Dashboard />,
+      },
+      {
+        path: 'recruiter-dashboard',
+        element: <RecruiterDashboard />,
+      },
+      {
+        path: 'recruiter-jobs',
+        element: <RecruiterJobs />,
+      },
+      {
+        path: 'recruiter-scan',
+        element: <RecruiterScan />,
+      },
+      {
+        path: 'recruiter-messages',
+        element: <RecruiterMessages />,
+      },
+      {
+        path: 'admin-dashboard',
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'jobs',
+        element: <StudentJobs />,
+      },
+      {
+        path: 'messages',
+        element: <StudentMessages />,
+      },
+      {
+        path: 'profile',
+        element: <Profile />,
+      },
+      {
+        path: 'profile-analysis',
+        element: <ProfileGuard><ProfileAnalysis /></ProfileGuard>,
+      },
+      {
+        path: 'mock-interview',
+        element: <ProfileGuard><MockInterview /></ProfileGuard>,
+      },
+      {
+        path: 'assessment-history',
+        element: <ProfileGuard><AssessmentHistory /></ProfileGuard>,
+      },
+      {
+        path: 'skill-evaluation',
+        element: <ProfileGuard><SkillEvaluation /></ProfileGuard>,
+      },
+      {
+        path: 'roadmap',
+        element: <ProfileGuard><RoadmapList /></ProfileGuard>,
+      },
+      {
+        path: 'roadmap/:id',
+        element: <ProfileGuard><RoadmapDetail /></ProfileGuard>,
+      }
+    ]
+  }
 ]);
 
 export default router;

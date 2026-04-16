@@ -82,7 +82,7 @@ export default function RecruiterScan() {
                                 <div className="talent-metrics">
                                     <div className="metric">
                                         <Award size={16} color="var(--primary)" />
-                                        <span>Avg. Score: {Math.round(talent.assessments?.reduce((s, a) => s + a.score, 0) / (talent.assessments?.length || 1))}%</span>
+                                        <span>Avg. Score: {talent.assessments?.length > 0 ? Math.round(talent.assessments.reduce((s, a) => s + (a.score || 0), 0) / talent.assessments.length) : 0}%</span>
                                     </div>
                                     <div className="metric">
                                         <Star size={16} color="#eab308" />
@@ -92,7 +92,7 @@ export default function RecruiterScan() {
                             </div>
 
                             <div className="talent-skills">
-                                {talent.skills.slice(0, 5).map(s => (
+                                {(talent.skills || []).slice(0, 5).map(s => (
                                     <span key={s} className="skill-tag">{s}</span>
                                 ))}
                             </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/api';
 import { motion as Motion } from 'framer-motion';
 import { Users, Briefcase, Search, Activity, ArrowUpRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import RecruiterSidebar from '../components/RecruiterSidebar';
 import AnimatedPage from '../components/AnimatedPage';
@@ -13,7 +14,8 @@ export default function RecruiterDashboard() {
         totalOpenings: 0,
         totalApplicants: 0,
         topMatchesCount: 0,
-        activeJobs: 0
+        activeJobs: 0,
+        growthData: []
     });
     const [loading, setLoading] = useState(true);
 
@@ -86,13 +88,23 @@ export default function RecruiterDashboard() {
                             <h3>Platform Growth</h3>
                             <button className="text-btn">View All</button>
                         </div>
-                        <div className="placeholder-chart">
-                            {/* In a real app, integrate Recharts here */}
-                            <div className="chart-bar" style={{ height: '40%' }}></div>
-                            <div className="chart-bar" style={{ height: '60%' }}></div>
-                            <div className="chart-bar" style={{ height: '80%' }}></div>
-                            <div className="chart-bar" style={{ height: '50%' }}></div>
-                            <div className="chart-bar" style={{ height: '90%' }}></div>
+                        <div className="placeholder-chart" style={{ display: 'block' }}>
+                            {stats.growthData && stats.growthData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={stats.growthData}>
+                                        <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
+                                        <YAxis stroke="var(--text-muted)" fontSize={12} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--glass-border)', color: 'var(--text-main)', borderRadius: '8px' }}
+                                            itemStyle={{ color: 'var(--primary)' }}
+                                        />
+                                        <Bar dataKey="applicants" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="matches" fill="var(--secondary)" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem' }}>No data available to compute growth chart.</p>
+                            )}
                         </div>
                     </section>
 

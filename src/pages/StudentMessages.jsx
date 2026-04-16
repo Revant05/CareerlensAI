@@ -18,24 +18,6 @@ export default function StudentMessages() {
     const [loading, setLoading] = useState(true);
     const [msgLoading, setMsgLoading] = useState(false);
 
-    useEffect(() => {
-        fetchChats();
-        // Check if we came from Job Marketplace to start a specific chat
-        if (location.state?.recipient) {
-            setSelectedChat(location.state.recipient);
-        }
-        const interval = setInterval(fetchChats, 5000);
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (selectedChat) {
-            fetchHistory(selectedChat.id);
-            const interval = setInterval(() => fetchHistory(selectedChat.id), 3000);
-            return () => clearInterval(interval);
-        }
-    }, [selectedChat]);
-
     const fetchChats = async () => {
         try {
             const res = await api.get('/message/chats');
@@ -54,6 +36,25 @@ export default function StudentMessages() {
             console.error('Error fetching history:', err);
         }
     };
+
+    useEffect(() => {
+        fetchChats();
+        // Check if we came from Job Marketplace to start a specific chat
+        if (location.state?.recipient) {
+            setSelectedChat(location.state.recipient);
+        }
+        const interval = setInterval(fetchChats, 5000);
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        if (selectedChat) {
+            fetchHistory(selectedChat.id);
+            const interval = setInterval(() => fetchHistory(selectedChat.id), 3000);
+            return () => clearInterval(interval);
+        }
+    }, [selectedChat]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();

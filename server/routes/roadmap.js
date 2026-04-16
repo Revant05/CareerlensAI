@@ -19,6 +19,57 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+const axios = require('axios');
+
+// AI Engine configuration
+const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://127.0.0.1:8001';
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET || 'careerlens_default_67890';
+
+// @route   GET api/roadmap/personalized
+// @desc    Get dynamic personalized roadmap based on multiple aspirations
+router.get('/personalized', auth, async (req, res) => {
+    try {
+        const user = await Student.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+        
+        let aspirationsToUse = user.aspirations;
+        if (!aspirationsToUse || aspirationsToUse.length === 0) {
+            if (user.aspiration) aspirationsToUse = [user.aspiration];
+            else return res.json({ msg: 'No aspirations set. Please update your profile.', roadmap: null });
+        }
+        
+        // Cache mechanism: If we already have a personalized roadmap and it's somewhat recent (optional enhancement), we could return it.
+        // For dynamic freshness, we'll hit the AI engine if it's missing or if the user requests a refresh (frontend can maybe pass ?refresh=true).
+        const forceRefresh = req.query.refresh === 'true';
+        
+        if (user.personalizedRoadmap && !forceRefresh) {
+            // Very simple cache check: if aspirations match the last generated (we didn't store diffs, so just return cached for now if it exists)
+            // But actually we want it dynamic. Let's return cached unless forced.
+            return res.json({ roadmap: user.personalizedRoadmap });
+        }
+        
+        // Fetch from AI Engine
+        const response = await axios.post(`${AI_ENGINE_URL}/generate-roadmap`, {
+            aspirations: aspirationsToUse
+        }, {
+            headers: {
+                'x-internal-secret': INTERNAL_SECRET
+            }
+        });
+        
+        const aiRoadmap = response.data;
+        
+        // Save to user profile
+        user.personalizedRoadmap = aiRoadmap;
+        await user.save();
+        
+        res.json({ roadmap: aiRoadmap });
+    } catch (err) {
+        console.error('AI Roadmap Generation error:', err.message);
+        res.status(500).json({ msg: 'Failed to generate dynamic roadmap from AI engine' });
+    }
+});
+
 // @route   GET api/roadmap/jobs
 // @desc    Get all active jobs for students
 router.get('/jobs', auth, async (req, res) => {
