@@ -10,10 +10,21 @@ import './login.css';
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login } = useAuth();
+    const { login, user, loading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/dashboard';
+
+    // If already logged in, redirect to appropriate dashboard
+    React.useEffect(() => {
+        if (!loading && user) {
+            if (user.role === 'recruiter') {
+                navigate('/recruiter-dashboard', { replace: true });
+            } else {
+                navigate(from, { replace: true });
+            }
+        }
+    }, [user, loading]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

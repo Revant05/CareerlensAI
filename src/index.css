@@ -79,41 +79,7 @@ body {
   background-position: center top;
 }
 
-/* Moving Scanline */
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 5px;
-  background: var(--scanline);
-  box-shadow: 0 0 10px var(--primary);
-  animation: scanline 8s linear infinite;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.5;
-}
-
-@keyframes scanline {
-  0% {
-    top: -10%;
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 0.5;
-  }
-
-  90% {
-    opacity: 0.5;
-  }
-
-  100% {
-    top: 110%;
-    opacity: 0;
-  }
-}
+/* Scanline animation removed */
 
 /* Profile Lock Overlay */
 .profile-lock-overlay {

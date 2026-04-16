@@ -44,10 +44,10 @@ export default function Profile() {
                 aspiration: res.data.aspiration || '',
                 phone: res.data.phone || '',
                 resume: res.data.resume || '',
-                strengths: res.data.swot?.strengths.join(', ') || '',
-                weaknesses: res.data.swot?.weaknesses.join(', ') || '',
-                opportunities: res.data.swot?.opportunities.join(', ') || '',
-                threats: res.data.swot?.threats.join(', ') || '',
+                strengths: res.data.swot?.strengths?.join(', ') || '',
+                weaknesses: res.data.swot?.weaknesses?.join(', ') || '',
+                opportunities: res.data.swot?.opportunities?.join(', ') || '',
+                threats: res.data.swot?.threats?.join(', ') || '',
                 education: res.data.education || [],
                 certifications: res.data.certifications || []
             });
@@ -157,15 +157,15 @@ export default function Profile() {
         setFormData({ ...formData, certifications: list });
     };
 
-    if (!profile) return <div className="loader-container">Initialising Recruiter Dashboard...</div>;
+    if (!profile) return <div className="loader-container">Initialising Your Profile...</div>;
 
     // Calculate Progress
     const progressItems = [
         profile.headline,
         profile.aspiration,
         profile.isVerifiedPhone,
-        profile.education.length > 0,
-        profile.swot?.strengths.length > 0
+        profile.education?.length > 0,
+        profile.swot?.strengths?.length > 0
     ];
     const progressPercent = Math.round((progressItems.filter(Boolean).length / progressItems.length) * 100);
 

@@ -114,3 +114,57 @@
     padding: 120px 0;
     color: var(--text-muted);
 }
+
+/* ── Start Interview Button ── */
+.start-interview-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(0, 243, 255, 0.12), rgba(99, 102, 241, 0.12));
+    border: 1px solid rgba(0, 243, 255, 0.35);
+    color: #00f3ff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.start-interview-btn:hover:not(:disabled) {
+    background: rgba(0, 243, 255, 0.22);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.start-interview-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-spinner {
+    animation: btn-spin 1s linear infinite;
+}
+
+@keyframes btn-spin {
+    100% { transform: rotate(360deg); }
+}
+
+.outline-btn-sm {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.outline-btn-sm:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}

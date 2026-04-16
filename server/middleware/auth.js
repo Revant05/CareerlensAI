@@ -24,12 +24,12 @@ module.exports = async function (req, res, next) {
 
         // Search in the correct collection based on role in token
         let user;
-        if (decoded.user.role === 'student') {
-            user = await Student.findById(decoded.user.id).select('-password');
-        } else if (decoded.user.role === 'recruiter') {
+        if (decoded.user.role === 'recruiter') {
             user = await Recruiter.findById(decoded.user.id).select('-password');
         } else if (decoded.user.role === 'admin') {
             user = await Admin.findById(decoded.user.id).select('-password');
+        } else {
+            user = await Student.findById(decoded.user.id).select('-password');
         }
 
         // Fallback for older tokens or if role is missing
@@ -41,7 +41,12 @@ module.exports = async function (req, res, next) {
 
         if (!user) return res.status(401).json({ msg: 'User no longer exists' });
 
-        req.user = user;
+        // Convert to plain object so we can safely spread/modify
+        // Must explicitly set 'id' because toObject() loses Mongoose's virtual 'id' getter
+        const userPlain = user.toObject();
+        userPlain.id = user._id.toString();
+        userPlain.role = user.role || decoded.user.role; // JWT role as fallback
+        req.user = userPlain;
         next();
     } catch (err) {
         res.status(401).json({ msg: 'Token is not valid' });

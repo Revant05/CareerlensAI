@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';
 import SkillChart from '../components/skillchart.jsx';
-import GlitchText from '../components/GlitchText';
 import './dashboard.css';
 
 export default function Dashboard() {
@@ -44,7 +43,7 @@ export default function Dashboard() {
       <nav className="dashboard-nav glass-panel">
         <div className="nav-branding">
           <img className="logo" src="logo.jpeg" alt="Logo" />
-          <GlitchText text="CareerLens AI" as="div" className="nav-logo" />
+          <div className="nav-logo">CareerLens AI</div>
         </div>
         <div className="nav-profile">
           <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
@@ -70,7 +69,7 @@ export default function Dashboard() {
             <div className="hero-badge">AI-Powered Career Guidance</div>
             <h1 className="hero-title">
               Transform Your <br />
-              <GlitchText text="Career Journey" as="span" className="hero-glitch" />
+              <span className="hero-glitch">Career Journey</span>
             </h1>
             <p className="hero-subtitle">
               Get personalized roadmaps, skill assessments, and AI-driven advice to accelerate your professional growth.
@@ -152,6 +151,13 @@ export default function Dashboard() {
               title="Skill Evaluation"
               desc="Assess your technical skills comprehensively."
               onClick={() => navigate('/skill-evaluation')}
+            />
+
+            <FeatureCard
+              icon={<Award size={24} color="#f59e0b" />}
+              title="Certificate Explorer"
+              desc="Discover top AI-recommended professional certifications."
+              onClick={() => navigate('/certificates')}
             />
           </Motion.div>
         </section>

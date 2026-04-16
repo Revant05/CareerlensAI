@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from schema import UserProfile, InterviewPayload, AnalysisResponse
 from agents_logic import CareerAgents
+from auth import router as auth_router
 from typing import Optional
 import os
 import uvicorn
@@ -15,6 +16,7 @@ async def verify_internal_auth(x_internal_secret: str = Header(...)):
     return True
 
 app = FastAPI(title="CareerLensAI Grand Scale Engine")
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 # Enable CORS for internal communication
 app.add_middleware(

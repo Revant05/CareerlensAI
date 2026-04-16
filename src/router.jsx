@@ -7,6 +7,8 @@ import Profile from './pages/profile';
 import ProfileAnalysis from './pages/profileanalysis';
 import MockInterview from './pages/mockinterview';
 import SkillEvaluation from './pages/skillevaluation';
+import CertificateSuggestions from './pages/CertificateSuggestions';
+import VideoCall from './pages/VideoCall';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfileGuard from './components/ProfileGuard';
 
@@ -80,12 +82,20 @@ const router = createBrowserRouter([
     element: <ProtectedRoute><ProfileGuard><SkillEvaluation /></ProfileGuard></ProtectedRoute>,
   },
   {
+    path: '/certificates',
+    element: <ProtectedRoute><ProfileGuard><CertificateSuggestions /></ProfileGuard></ProtectedRoute>,
+  },
+  {
     path: '/roadmap',
     element: <ProtectedRoute><ProfileGuard><RoadmapList /></ProfileGuard></ProtectedRoute>,
   },
   {
     path: '/roadmap/:id',
     element: <ProtectedRoute><ProfileGuard><RoadmapDetail /></ProfileGuard></ProtectedRoute>,
+  },
+  {
+    path: '/video-call/:roomId',
+    element: <ProtectedRoute><VideoCall /></ProtectedRoute>,
   },
 ]);
 
