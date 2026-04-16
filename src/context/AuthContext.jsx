@@ -17,10 +17,6 @@ export const AuthProvider = ({ children }) => {
                     const res = await api.get('/auth/me');
                     setUser(res.data);
                 } catch (err) {
-<<<<<<< HEAD
-                    console.error("Auth initialization failed", err);
-                    localStorage.removeItem('token');
-=======
                     const status = err.response?.status;
                     // Only clear token if server explicitly says unauthorized (401)
                     // Do NOT clear on network errors, rate limits (429), or server errors (500)
@@ -31,7 +27,6 @@ export const AuthProvider = ({ children }) => {
                         console.warn('Auth check failed temporarily (status:', status, ') — keeping session.');
                         // Still try to keep user logged in from cached token
                     }
->>>>>>> himanshu
                 }
             }
             setLoading(false);
@@ -76,17 +71,10 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, setUser, login, signup, logout, loading }}>
-<<<<<<< HEAD
             {!loading && children}
-=======
-            {children}
->>>>>>> himanshu
         </AuthContext.Provider>
     );
 };
 
-<<<<<<< HEAD
 // eslint-disable-next-line react-refresh/only-export-components
-=======
->>>>>>> himanshu
 export const useAuth = () => useContext(AuthContext);

@@ -5,11 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-<<<<<<< HEAD
   globalIgnores(['dist', 'server', 'ai-engine']),
-=======
-  globalIgnores(['dist']),
->>>>>>> himanshu
   {
     files: ['**/*.{js,jsx}'],
     extends: [
