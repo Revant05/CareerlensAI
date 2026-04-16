@@ -54,22 +54,18 @@ export default function StudentJobs() {
     return (
         <>
         <AnimatedPage className="student-jobs-page">
-            <nav className="dashboard-nav glass-panel">
-                <button onClick={() => navigate('/dashboard')} className="back-btn">
-                    <ArrowLeft size={20} />
-                    <span>Back to Dashboard</span>
-                </button>
-                <div className="nav-profile" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Search size={18} className="search-icon" />
+            <div className="jobs-search-container container" style={{ marginTop: '2rem' }}>
+                <div className="search-bar-wrapper glass-panel">
+                    <Search size={22} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Search jobs, companies..."
+                        placeholder="Search for roles, skills, or companies..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="job-search-input"
+                        className="job-search-input-modern"
                     />
                 </div>
-            </nav>
+            </div>
 
             <div className="jobs-content container">
                 <header className="jobs-header">

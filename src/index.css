@@ -90,6 +90,40 @@ body::before, body::after {
   animation: floatAura 20s ease-in-out infinite alternate;
 }
 
+.role-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.role-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-btn:hover {
+  background: var(--glass-highlight);
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+.role-btn.active {
+  background: var(--primary);
+  color: #000;
+  font-weight: 700;
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+
 body::before {
   top: -15%;
   left: -15%;
@@ -249,4 +283,30 @@ a {
 ::-webkit-scrollbar-thumb {
   background: var(--glass-border);
   border-radius: 10px;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 3rem 2.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border: 1px solid var(--glass-border);
+}
+
+.auth-card:hover {
+  transform: none; /* No hover lift for auth card to keep focus */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
 }

@@ -87,6 +87,47 @@
 .header-actions {
     display: flex;
     align-items: center;
+    gap: 1.2rem;
+}
+
+.user-name-display {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(0, 243, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    color: var(--primary);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-name-display:hover {
+    background: rgba(0, 243, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    color: var(--primary);
+    transform: rotate(15deg);
 }
 
 /* Nudge Banner */

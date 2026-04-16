@@ -40,24 +40,7 @@ export default function Dashboard() {
 
   return (
     <AnimatedPage className="dashboard-container">
-      <nav className="dashboard-nav glass-panel">
-        <div className="nav-branding">
-          <img className="logo" src="logo.jpeg" alt="Logo" />
-          <div className="nav-logo">CareerLens AI</div>
-        </div>
-        <div className="nav-profile">
-          <button onClick={() => navigate('/profile')} className="user-name-btn" title="View Profile">
-            {user?.role === 'admin' ? <Shield size={18} style={{ marginRight: '5px' }} /> : <User size={18} style={{ marginRight: '5px' }} />}
-            {user?.name || 'User'}
-          </button>
-          <button onClick={toggleTheme} className="logout-btn" title="Toggle Theme" style={{ marginRight: '10px' }}>
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <button onClick={handleLogout} className="logout-btn" title="Logout">
-            <LogOut size={20} />
-          </button>
-        </div>
-      </nav>
+
 
       <div className="dashboard-wrapper container">
         <section className="hero-section">

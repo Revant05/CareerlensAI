@@ -49,17 +49,11 @@ export default function Signup() {
                     <p className="auth-subtitle">Choose your path in the CareerLens ecosystem</p>
                 </div>
 
-                <div className="role-selector" style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
+                <div className="role-selector">
                     <button
                         type="button"
                         onClick={() => setRole('student')}
                         className={`role-btn ${role === 'student' ? 'active' : ''}`}
-                        style={{
-                            flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--primary)',
-                            background: role === 'student' ? 'var(--primary)' : 'transparent',
-                            color: role === 'student' ? '#000' : 'var(--primary)',
-                            cursor: 'pointer', transition: 'all 0.3s'
-                        }}
                     >
                         I am a Student
                     </button>
@@ -67,12 +61,6 @@ export default function Signup() {
                         type="button"
                         onClick={() => setRole('recruiter')}
                         className={`role-btn ${role === 'recruiter' ? 'active' : ''}`}
-                        style={{
-                            flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--primary)',
-                            background: role === 'recruiter' ? 'var(--primary)' : 'transparent',
-                            color: role === 'recruiter' ? '#000' : 'var(--primary)',
-                            cursor: 'pointer', transition: 'all 0.3s'
-                        }}
                     >
                         I am a Recruiter
                     </button>

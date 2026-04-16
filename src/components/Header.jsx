@@ -47,11 +47,15 @@ export default function Header() {
                     )}
                 </nav>
 
-                <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button onClick={toggleTheme} className="theme-toggle-btn" title="Toggle Theme" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="header-actions" style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
+                    <button onClick={() => window.location.href = '/profile'} className="user-name-display" title="View Profile">
+                        {user.role === 'admin' ? <Shield size={16} /> : <User size={16} />}
+                        <span>{user.name || 'User'}</span>
+                    </button>
+                    <button onClick={toggleTheme} className="theme-toggle-btn" title="Toggle Theme">
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-                    <button className="neon-btn small outline" onClick={logout}>Logout</button>
+                    <button className="neon-btn small" onClick={logout}>Logout</button>
                 </div>
             </header>
         </>
