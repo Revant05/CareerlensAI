@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
-import { LogOut, User, Map, MessageSquare, BookOpen, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield } from 'lucide-react';
+import { LogOut, User, Map, MessageSquare, BarChart2, Users, Sun, Moon, Award, Briefcase, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AnimatedPage from '../components/AnimatedPage';

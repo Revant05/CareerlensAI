@@ -75,7 +75,7 @@ const skills = [
 
 export default function SkillEvaluation() {
     const navigate = useNavigate();
-    const { user, setUser } = useAuth();
+    const { setUser } = useAuth();
     const [currentState, setCurrentState] = useState('selection'); // selection, assessment, results
     const [selectedStacks, setSelectedStacks] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -99,7 +99,7 @@ export default function SkillEvaluation() {
         } else if (timeLeft === 0 && currentState === 'assessment') {
             handleNextQuestion();
         }
-    }, [timeLeft, currentState]);
+    }, [timeLeft, currentState, currentQuestionIndex, questions.length]);
 
     const toggleStack = (stackId) => {
         if (selectedStacks.includes(stackId)) {

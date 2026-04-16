@@ -275,20 +275,7 @@ const specificRoadmapDetails = {
 // ==========================================
 // 3. GENERATOR FUNCTION
 // ==========================================
-const getRoadmapData = (id, title) => {
-  if (specificRoadmapDetails[id]) return specificRoadmapDetails[id];
-  return {
-    title: title,
-    desc: `Comprehensive guide to becoming an expert in ${title}.`,
-    steps: [
-      { title: "1. Fundamentals", sub: [`What is ${title}?`, `Setting up the Environment`, "Basic Concepts & Syntax", "Core Principles"] },
-      { title: "2. Key Tools & Libraries", sub: ["Popular Frameworks", "Standard Library", "Package Management", "Debugging Tools"] },
-      { title: "3. Intermediate Topics", sub: ["Advanced Patterns", "Best Practices", "Testing & Quality", "Error Handling"] },
-      { title: "4. Advanced Mastery", sub: ["Performance Optimization", "Architecture", "Security Best Practices", "Scalability"] },
-      { title: "5. Real World Projects", sub: [`Build a CRUD Application`, `Contribute to Open Source`, `Deploying ${title} Apps`] }
-    ]
-  };
-};
+
 
 // ==========================================
 // 4. COMPONENTS
@@ -441,7 +428,7 @@ export const RoadmapDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchRoadmapData();
-  }, [id]);
+  }, [id, fetchRoadmapData]);
 
   const fetchRoadmapData = async () => {
     if (!user) return;
@@ -478,14 +465,7 @@ export const RoadmapDetail = () => {
     }
   };
 
-  const refreshUser = async () => {
-    try {
-      const res = await api.get('/auth/me');
-      setUser(res.data);
-    } catch (err) {
-      console.error("Context refresh failed", err);
-    }
-  };
+
 
   const finishRoadmap = async () => {
     try {
